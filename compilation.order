@@ -1,0 +1,7 @@
+.\src\common.v
+.\src\ex_stage.v
+.\src\id_stage.v
+.\src\buffers.v
+.\src\if_stage.v
+.\src\functional_units.v
+.\src\wb_stage.v

@@ -1,0 +1,1 @@
+-o C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/compile -lc C:/Users/HP/OneDrive/Desktop/architecture/project2/library.cfg -fl C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/projlib.cfg -pli "C:/Aldec/Active-HDL-Student-Edition/bin/systf.dll" -O2 -sve -msg 5 -sv2k17 -work proj C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/id_stage.v 
