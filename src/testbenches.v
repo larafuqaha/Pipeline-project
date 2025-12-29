@@ -433,3 +433,154 @@ module DataMemo_tb;
 
 endmodule
 
+module tb_Execute;
+
+    reg clk;
+
+    // -------- inputs --------
+    reg        RegWr_ID;
+    reg        MemWr_ID;
+    reg        MemRd_ID;
+    reg [1:0]  WBdata_ID;
+    reg        ALUSrc_ID;
+    reg [2:0]  ALUop_ID;
+
+    reg [31:0] npc2;
+    reg [31:0] imm;
+    reg [31:0] A;
+    reg [31:0] B;
+    reg [3:0]  rd2;
+    reg        RPzero_ID;
+
+    // -------- outputs --------
+    wire        RegWr_EX;
+    wire        MemWr_EX;
+    wire        MemRd_EX;
+    wire [1:0]  WBdata_EX;
+
+    wire [31:0] ALUout_EX;
+    wire [31:0] D;
+    wire [31:0] npc3;
+    wire [3:0]  rd3;
+    wire        RPzero_EX;
+
+    // -------- DUT --------
+    Execute dut (
+        .clk(clk),
+
+        .RegWr_ID(RegWr_ID),
+        .MemWr_ID(MemWr_ID),
+        .MemRd_ID(MemRd_ID),
+        .WBdata_ID(WBdata_ID),
+        .ALUSrc_ID(ALUSrc_ID),
+        .ALUop_ID(ALUop_ID),
+
+        .npc2(npc2),
+        .imm(imm),
+        .A(A),
+        .B(B),
+        .rd2(rd2),
+        .RPzero_ID(RPzero_ID),
+
+        .RegWr_EX(RegWr_EX),
+        .MemWr_EX(MemWr_EX),
+        .MemRd_EX(MemRd_EX),
+        .WBdata_EX(WBdata_EX),
+
+        .ALUout_EX(ALUout_EX),
+        .D(D),
+        .npc3(npc3),
+        .rd3(rd3),
+        .RPzero_EX(RPzero_EX)
+    );
+
+    // -------- clock --------
+    always #5 clk = ~clk;
+
+    // -------- monitor --------
+    initial begin
+        $monitor(
+            "T=%0t | ALUop=%b | A=%0d B=%0d imm=%0d | ALUSrc=%b | ALUout=%0d | D=%0d | Rd=%0d | RPzero=%b",
+            $time, ALUop_ID, A, B, imm, ALUSrc_ID,
+            ALUout_EX, D, rd3, RPzero_EX
+        );
+    end
+
+    // -------- test sequence --------
+    initial begin
+        clk = 0;
+
+        // default inputs
+        RegWr_ID   = 0;
+        MemWr_ID   = 0;
+        MemRd_ID   = 0;
+        WBdata_ID  = 2'b00;
+        ALUSrc_ID  = 0;
+        ALUop_ID   = 3'b000;
+
+        A = 0;
+        B = 0;
+        imm = 0;
+        npc2 = 0;
+        rd2 = 0;
+        RPzero_ID = 0;
+
+        // ---------- ADD ----------
+        @(posedge clk);
+        A = 10;
+        B = 5;
+        ALUop_ID = 3'b000; // ADD
+        rd2 = 4'd3;
+        RegWr_ID = 1;
+
+        // ---------- SUB ----------
+        @(posedge clk);
+        A = 10;
+        B = 4;
+        ALUop_ID = 3'b001; // SUB
+        rd2 = 4'd4;
+
+        // ---------- AND ----------
+        @(posedge clk);
+        A = 8;
+        B = 3;
+        ALUop_ID = 3'b100; // AND
+        rd2 = 4'd5;
+
+        // ---------- OR ----------
+        @(posedge clk);
+        A = 8;
+        B = 1;
+        ALUop_ID = 3'b010; // OR
+        rd2 = 4'd6;
+
+        // ---------- NOR ----------
+        @(posedge clk);
+        A = 8;
+        B = 1;
+        ALUop_ID = 3'b011; // NOR
+        rd2 = 4'd7;
+
+        // ---------- ALUSrc = immediate ----------
+        @(posedge clk);
+        A = 20;
+        imm = 7;
+        ALUSrc_ID = 1;
+        ALUop_ID = 3'b000; // ADD imm
+        rd2 = 4'd8;
+
+        // ---------- store data forwarding ----------
+        @(posedge clk);
+        B = 99;
+        MemWr_ID = 1;
+
+        // ---------- predicate propagation ----------
+        @(posedge clk);
+        RPzero_ID = 1;
+
+        // finish
+        #10;
+        $finish;
+    end
+
+endmodule
