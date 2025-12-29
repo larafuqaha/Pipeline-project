@@ -7,3 +7,4 @@
 .\src\wb_stage.v
 .\src\testbenches.v
 .\src\mem_stage.v
+.\src\ID_testbench.v

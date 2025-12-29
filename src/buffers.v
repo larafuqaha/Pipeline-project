@@ -22,7 +22,7 @@ endmodule
 module ID_EX (
     input  wire        clk,
 
-    // -------- Control signals from ID --------
+    // control
     input  wire        RegWr_ID,
     input  wire        MemWr_ID,
     input  wire        MemRd_ID,
@@ -30,14 +30,17 @@ module ID_EX (
     input  wire [2:0]  ALUop_ID,
     input  wire [1:0]  WBdata_ID,
 
-    // -------- Data signals from ID --------
+    // data
     input  wire [31:0] A_ID,
     input  wire [31:0] B_ID,
     input  wire [31:0] Imm_ID,
     input  wire [31:0] NPC_ID,
     input  wire [4:0]  Rd_ID,
 
-    // -------- Outputs to EX stage --------
+    // predicate
+    input  wire        RPzero_ID,
+
+    // outputs
     output reg         RegWr_EX,
     output reg         MemWr_EX,
     output reg         MemRd_EX,
@@ -49,24 +52,27 @@ module ID_EX (
     output reg  [31:0] B_EX,
     output reg  [31:0] Imm_EX,
     output reg  [31:0] NPC_EX,
-    output reg  [4:0]  Rd_EX
+    output reg  [4:0]  Rd_EX,
+
+    output reg         RPzero_EX
 );
 
     always @(posedge clk) begin
-    	RegWr_EX  <= RegWr_ID;
-    	MemWr_EX  <= MemWr_ID;
-    	MemRd_EX  <= MemRd_ID;
-    	ALUSrc_EX <= ALUSrc_ID;
-    	ALUop_EX  <= ALUop_ID;
-    	WBdata_EX <= WBdata_ID;
+        RegWr_EX  <= RegWr_ID;
+        MemWr_EX  <= MemWr_ID;
+        MemRd_EX  <= MemRd_ID;
+        ALUSrc_EX <= ALUSrc_ID;
+        ALUop_EX  <= ALUop_ID;
+        WBdata_EX <= WBdata_ID;
 
-    	A_EX      <= A_ID;
-    	B_EX      <= B_ID;
-    	Imm_EX    <= Imm_ID;
-    	NPC_EX    <= NPC_ID;
-    	Rd_EX     <= Rd_ID;
-	end
+        A_EX      <= A_ID;
+        B_EX      <= B_ID;
+        Imm_EX    <= Imm_ID;
+        NPC_EX    <= NPC_ID;
+        Rd_EX     <= Rd_ID;
 
+        RPzero_EX <= RPzero_ID;
+    end
 
 endmodule
 

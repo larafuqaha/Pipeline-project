@@ -1,5 +1,0 @@
-ERROR VCP2000 "Syntax error. Unexpected token: output[_OUTPUT]." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/mem_stage.v" 14 11
-ERROR VCP2000 "Syntax error. Unexpected token: output[_OUTPUT]." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/mem_stage.v" 15 11
-ERROR VCP2000 "Syntax error. Unexpected token: output[_OUTPUT]." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/mem_stage.v" 16 11
-ERROR VCP2000 "Syntax error. Unexpected token: )." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/mem_stage.v" 17 2
-ERROR VCP2000 "Syntax error. Unexpected token: data_mem[_IDENTIFIER]." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/mem_stage.v" 23 13
