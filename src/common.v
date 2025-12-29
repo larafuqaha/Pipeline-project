@@ -92,26 +92,26 @@ module Hazard_Unit (
         ForwardB = 2'b00;
 
         // Forward A (Rs)
-        if (RegWrite_EX  && RPzero_EX  && (Rd_EX  != 0) && (Rd_EX  == Rs))
+        if (RegWrite_EX  && !RPzero_EX  && (Rd_EX  != 0) && (Rd_EX  == Rs))
             ForwardA = 2'b01;
-        else if (RegWrite_MEM && RPzero_MEM && (Rd_MEM != 0) && (Rd_MEM == Rs))
+        else if (RegWrite_MEM && !RPzero_MEM && (Rd_MEM != 0) && (Rd_MEM == Rs))
             ForwardA = 2'b10;
-        else if (RegWrite_WB  && RPzero_WB  && (Rd_WB  != 0) && (Rd_WB  == Rs))
+        else if (RegWrite_WB  && !RPzero_WB  && (Rd_WB  != 0) && (Rd_WB  == Rs))
             ForwardA = 2'b11;
 
         // Forward B (Rt)
-        if (RegWrite_EX  && RPzero_EX  && (Rd_EX  != 0) && (Rd_EX  == Rt))
+        if (RegWrite_EX  && !RPzero_EX  && (Rd_EX  != 0) && (Rd_EX  == Rt))
             ForwardB = 2'b01;
-        else if (RegWrite_MEM && RPzero_MEM && (Rd_MEM != 0) && (Rd_MEM == Rt))
+        else if (RegWrite_MEM && !RPzero_MEM && (Rd_MEM != 0) && (Rd_MEM == Rt))
             ForwardB = 2'b10;
-        else if (RegWrite_WB  && RPzero_WB  && (Rd_WB  != 0) && (Rd_WB  == Rt))
+        else if (RegWrite_WB  && !RPzero_WB  && (Rd_WB  != 0) && (Rd_WB  == Rt))
             ForwardB = 2'b11;
     end
 
     // ---------- Load-use stall ----------
     always @(*) begin
         if (MemRead_EX &&
-            RPzero_EX &&
+            !RPzero_EX &&
             (Rd_EX != 0) &&
             ((Rd_EX == Rs) || (Rd_EX == Rt)))
             Stall = 1'b1;

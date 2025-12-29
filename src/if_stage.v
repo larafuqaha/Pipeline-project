@@ -1,69 +1,65 @@
-module Fetch (
+module IF_stage (
     input  wire        clk,
     input  wire        reset,
 
-    // From Hazard Detect / Stall logic (diagram: "Disable PC", "Disable IR")
-    // In the datapath these are enables: when low, the reg holds its value.
-    input  wire        PCWr,      // enable write to PC (R30)
-    input  wire        IRWrite,   // enable write to IR and NPC regs
+    // Control signals
+    input  wire        disable_PC,   // stall PC
+    input  wire        disable_IR,   // stall IF/ID
+    input  wire        KILL,          // flush instruction
+    input  wire [1:0]  PCsrc,         // PC select
 
-    // From PC control (diagram: PCSrc selects PC+1 / TargetAddress / Reg[Rs])
-    input  wire [1:0]  PCSrc,
+    // Resolved PC inputs (from ID stage)
+    input  wire [31:0] PC_offset,     // PC + signext(offset)
+    input  wire [31:0] PC_regRs,       // Reg[Rs] (JR)
 
-    // Bubble/kill (diagram: KILL -> mux inserts NOP)
-    input  wire        KILL,
+    // Outputs to IF/ID
+    output reg  [31:0] Instruction_F,
+    output reg  [31:0] NPC_F,
 
-    // Mux inputs (diagram labels)
-    input  wire [31:0] TargetAddress, // resolved target (branch/jump target)
-    input  wire [31:0] RegRs,         // JR target (Reg[Rs])
+    // Program Counter (R30)
+    output reg  [31:0] PC
+); 
 
-    // Outputs / pipeline regs (diagram: PC(R30), NPC, IR)
-    output reg  [31:0] PC,   // PC (R30) -> Instruction Memory Address
-    output reg  [31:0] NPC,  // latched PC+1
-    output reg  [31:0] IR    // latched instruction
-);
+      // PC + 1
+    wire [31:0] PC_plus1;
+    assign PC_plus1 = PC + 32'd1;
 
-    // PC + 1 (word-addressed, as in the diagram)
-    wire [31:0] PC_plus1 = PC + 32'd1;
+     //  Next PC selection
+    wire [31:0] PC_next;
 
-    // Next PC from PC mux (PCSrc)
-    reg  [31:0] PC_next;
-    always @(*) begin
-        case (PCSrc)
-            2'd0: PC_next = PC_plus1;      // PC+1
-            2'd1: PC_next = TargetAddress; // Target Address
-            2'd2: PC_next = RegRs;         // Reg[Rs]
-            default: PC_next = PC_plus1;
-        endcase
-    end
-
-    // Instruction memory (combinational read assumed, matches your instantiation style)
-    wire [31:0] imem_instr;
-    InstructionMemo imem (
-        .Address     (PC),
-        .Instruction (imem_instr)
+    mux3 #(32) pc_mux (
+        .a(PC_plus1),    // PCsrc = 00
+        .b(PC_offset),   // PCsrc = 01
+        .c(PC_regRs),    // PCsrc = 10
+        .s(PCsrc),
+        .y(PC_next)
     );
 
-    // IR input mux for bubble/kill (insert NOP)
-    wire [31:0] IR_in = (KILL) ? 32'h0000_0000 : imem_instr; // NOP encoding per your design
-
-    // Sequential regs: PC(R30), NPC, IR
+     // PC Register (R30)
     always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            PC  <= 32'd0;
-            NPC <= 32'd0;
-            IR  <= 32'd0;
-        end else begin
-            // PC update can be stalled independently
-            if (PCWr) begin
-                PC <= PC_next;
-            end
+        if (reset)
+            PC <= 32'd0;
+        else if (!disable_PC)
+            PC <= PC_next;
+    end
 
-            // NPC/IR update can be stalled independently
-            if (IRWrite) begin
-                NPC <= PC_plus1; // latch PC+1 (from current PC)
-                IR  <= IR_in;    // latch instruction or NOP if KILL
-            end
+    // Instruction Memory
+    wire [31:0] Instruction;
+
+    InstructionMemo IM (
+        .Address(PC),
+        .Instruction(Instruction)
+    );
+
+    // IF / ID register outputs
+    always @(posedge clk) begin
+        if (!disable_IR) begin
+            if (KILL)
+                Instruction_F <= 32'h00000000; // NOP
+            else
+                Instruction_F <= Instruction;
+
+            NPC_F <= PC_plus1;
         end
     end
 

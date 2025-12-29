@@ -1,6 +1,20 @@
-//======================================================
+//Fetch - Decode Buffer ==> IF_ID
+module IF_ID(
+  input clk,disable_IR,kill,
+  input [31:0] Instruction_F,NPC_F,
+  output reg [31:0] Instruction_D, NPC_D
+  );
+
+  always@(posedge clk) begin
+    if(~disable_IR) begin
+      if(kill) Instruction_D <= 32'h00000000;	// NOP
+      else Instruction_D <= Instruction_F;
+      NPC_D <= NPC_F;
+    end
+  end
+endmodule
+
 // EX / MEM Pipeline Register
-//======================================================
 module EX_MEM (
     input  wire        clk,
 
@@ -62,22 +76,6 @@ module MEM_WB (
         Data_out     <= Data;	
     end
 
-endmodule
-
-//Fetch - Decode Buffer ==> IF_ID
-module IF_ID(
-  input clk,disable_IR,kill,
-  input [31:0] Instruction_F,NPC_F,
-  output reg [31:0] Instruction_D, NPC_D
-  );
-
-  always@(posedge clk) begin
-    if(~disable_IR) begin
-      if(kill) Instruction_D <= 32'h00000000;	// NOP
-      else Instruction_D <= Instruction_F;
-      NPC_D <= NPC_F;
-    end
-  end
 endmodule
 
 //======================================================

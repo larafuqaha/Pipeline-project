@@ -132,7 +132,7 @@ module control_unit (
 
 endmodule
 
-module extender (
+module extender ( 
     input  wire [4:0]  opcode,
     input  wire [21:0] imm_in,     // [11:0] for I-type, [21:0] for J-type
     input  wire        ExtOp,      // 1 = sign, 0 = zero (I-type only)
@@ -145,7 +145,7 @@ module extender (
         case (opcode)
 
             // J, CALL ? 22-bit signed offset (ALWAYS sign-extended)
-            5'd11,5'd12, 5'd13: begin
+            5'd11,5'd12: begin
                 extend_bit = imm_in[21];
                 imm_out = { {10{extend_bit}}, imm_in[21:0] };
             end
@@ -163,7 +163,7 @@ endmodule
 
 module pc_control (
     input  wire [4:0] Op,        // opcode
-    input  wire       Rpzero,     // 1 if Reg[Rp] == 0
+    input  wire       Rpzero,     // =1 if Reg[Rp] == 0
     output reg  [1:0] PCsrc,      // PC source select
     output reg        KILL        // kill next instruction
 );
