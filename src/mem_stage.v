@@ -27,8 +27,11 @@ module mem_stage (
         .clk      (clk),
         .MemRd  (memR),
         .MemWr_final (memW),
-		
-        .Address  (ALUout[5:0])
+
+        // If ALUout is WORD address -> keep [15:0]
+        .Address  (ALUout[15:0])
+        // If ALUout is BYTE address -> use this instead:
+        // .Address(ALUout[17:2])
 
         ,
         .Data_in  (D),

@@ -34,7 +34,7 @@ module Execute (
     input [31:0] imm,
     input [31:0] A,
     input [31:0] B,
-    input [4:0]  rd2,	 
+	input [4:0]  rd2,	 
 	input  wire   RPzero_ID,
 
     // -------- outputs to MEM stage (EX/MEM) --------
@@ -46,7 +46,7 @@ module Execute (
     output reg [31:0] ALUout_EX,
     output reg [31:0] D,
     output reg [31:0] npc3,
-    output reg [4:0]  rd3,	
+	output reg [4:0]  rd3,	
 	output reg         RPzero_EX
 );
 

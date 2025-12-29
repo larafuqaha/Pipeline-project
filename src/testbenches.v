@@ -191,6 +191,248 @@ module tb_IF_ID;
 
 endmodule
 
+module tb_Hazard_Unit;
+
+    // Inputs
+    reg  [4:0] Rs, Rt;
+    reg  [4:0] Rd_EX, Rd_MEM, Rd_WB;
+
+    reg        RegWrite_EX;
+    reg        RegWrite_MEM;
+    reg        RegWrite_WB;
+
+    reg        MemRead_EX;
+
+    reg        RPzero_EX;
+    reg        RPzero_MEM;
+    reg        RPzero_WB;
+
+    // Outputs
+    wire [1:0] ForwardA;
+    wire [1:0] ForwardB;
+    wire       Stall;
+
+    // DUT
+    Hazard_Unit dut (
+        .Rs(Rs),
+        .Rt(Rt),
+        .Rd_EX(Rd_EX),
+        .Rd_MEM(Rd_MEM),
+        .Rd_WB(Rd_WB),
+        .RegWrite_EX(RegWrite_EX),
+        .RegWrite_MEM(RegWrite_MEM),
+        .RegWrite_WB(RegWrite_WB),
+        .MemRead_EX(MemRead_EX),
+        .RPzero_EX(RPzero_EX),
+        .RPzero_MEM(RPzero_MEM),
+        .RPzero_WB(RPzero_WB),
+        .ForwardA(ForwardA),
+        .ForwardB(ForwardB),
+        .Stall(Stall)
+    );
+
+    // Task for displaying state
+    task show;
+        begin
+            #1;
+            $display(
+                "Rs=%0d Rt=%0d | Rd_EX=%0d Rd_MEM=%0d Rd_WB=%0d | FA=%b FB=%b Stall=%b",
+                Rs, Rt, Rd_EX, Rd_MEM, Rd_WB, ForwardA, ForwardB, Stall
+            );
+        end
+    endtask
+
+    initial begin
+        $display("==== Hazard Unit Testbench ====");
+
+        // Default values
+        Rs = 0; Rt = 0;
+        Rd_EX = 0; Rd_MEM = 0; Rd_WB = 0;
+        RegWrite_EX = 0; RegWrite_MEM = 0; RegWrite_WB = 0;
+        MemRead_EX = 0;
+        RPzero_EX = 0; RPzero_MEM = 0; RPzero_WB = 0;
+
+        show;
+
+        // ------------------------------
+        // EX forwarding (Rs)
+        // ------------------------------
+        Rs = 5; Rt = 3;
+        Rd_EX = 5;
+        RegWrite_EX = 1;
+        show; // ForwardA = 01
+
+        // ------------------------------
+        // MEM forwarding (Rs)
+        // ------------------------------
+        RegWrite_EX = 0;
+        Rd_EX = 0;
+        Rd_MEM = 5;
+        RegWrite_MEM = 1;
+        show; // ForwardA = 10
+
+        // ------------------------------
+        // WB forwarding (Rs)
+        // ------------------------------
+        RegWrite_MEM = 0;
+        Rd_MEM = 0;
+        Rd_WB = 5;
+        RegWrite_WB = 1;
+        show; // ForwardA = 11
+
+        // ------------------------------
+        // Forwarding on Rt
+        // ------------------------------
+        Rs = 1; Rt = 7;
+        Rd_EX = 7;
+        RegWrite_EX = 1;
+        show; // ForwardB = 01
+
+        // ------------------------------
+        // Killed instruction (no forward)
+        // ------------------------------
+        RPzero_EX = 1;
+        show; // No forwarding
+
+        RPzero_EX = 0;
+        RegWrite_EX = 0;
+
+        // ------------------------------
+        // Load-use hazard (stall)
+        // ------------------------------
+        Rs = 4; Rt = 6;
+        Rd_EX = 4;
+        MemRead_EX = 1;
+        RegWrite_EX = 1;
+        show; // Stall = 1
+
+        // ------------------------------
+        // No stall when Rd_EX = 0
+        // ------------------------------
+        Rd_EX = 0;
+        show; // Stall = 0
+
+        // ------------------------------
+        // No stall if instruction killed
+        // ------------------------------
+        Rd_EX = 6;
+        RPzero_EX = 1;
+        show; // Stall = 0
+
+        // ------------------------------
+        // Cleanup
+        // ------------------------------
+        MemRead_EX = 0;
+        RegWrite_EX = 0;
+        RPzero_EX = 0;
+
+        $display("==== Test Complete ====");
+        $finish;
+    end
+
+endmodule
+
+module DataMemo_tb;
+
+    reg         clk;
+    reg         MemRd;
+    reg         MemWr_final;
+    reg  [31:0] Address;
+    reg  [31:0] Data_in;
+    wire [31:0] Data_out;
+
+    DataMemo dut (
+        .clk(clk),
+        .MemRd(MemRd),
+        .MemWr_final(MemWr_final),
+        .Address(Address),
+        .Data_in(Data_in),
+        .Data_out(Data_out)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0;
+        MemRd = 0;
+        MemWr_final = 0;
+        Address = 0;
+        Data_in = 0;
+
+        // --------------------------------
+        // Test 1: Write to memory
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 1;
+        Address = 10;
+        Data_in = 32'hAAAA5555;
+
+        @(posedge clk);
+        MemWr_final = 0;
+
+        // --------------------------------
+        // Test 2: Read from same address
+        // --------------------------------
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T1 | Read Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        // --------------------------------
+        // Test 3: Read disabled
+        // --------------------------------
+        MemRd = 0;
+        #1;
+        $display("T2 | Read disabled = %h (expect 00000000)", Data_out);
+
+        // --------------------------------
+        // Test 4: Write to another address
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 1;
+        Address = 20;
+        Data_in = 32'h12345678;
+
+        @(posedge clk);
+        MemWr_final = 0;
+
+        // --------------------------------
+        // Test 5: Read second address
+        // --------------------------------
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T3 | Read Addr 20 = %h (expect 12345678)", Data_out);
+
+        // --------------------------------
+        // Test 6: Ensure first address unchanged
+        // --------------------------------
+        Address = 10;
+        #1;
+        $display("T4 | Read Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        // --------------------------------
+        // Test 7: Write disabled (no change)
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 0;
+        Address = 10;
+        Data_in = 32'hFFFFFFFF;
+
+        @(posedge clk);
+
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T5 | Write disabled, Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        #10;
+        $stop;
+    end
+
+endmodule
+
 module tb_Execute;
 
     reg clk;
@@ -338,147 +580,6 @@ module tb_Execute;
 
         // finish
         #10;
-        $finish;
-    end
-
-endmodule
-
-module tb_Hazard_Unit;
-
-    // Inputs
-    reg  [4:0] Rs, Rt;
-    reg  [4:0] Rd_EX, Rd_MEM, Rd_WB;
-
-    reg        RegWrite_EX;
-    reg        RegWrite_MEM;
-    reg        RegWrite_WB;
-
-    reg        MemRead_EX;
-
-    reg        RPzero_EX;
-    reg        RPzero_MEM;
-    reg        RPzero_WB;
-
-    // Outputs
-    wire [1:0] ForwardA;
-    wire [1:0] ForwardB;
-    wire       Stall;
-
-    // DUT
-    Hazard_Unit dut (
-        .Rs(Rs),
-        .Rt(Rt),
-        .Rd_EX(Rd_EX),
-        .Rd_MEM(Rd_MEM),
-        .Rd_WB(Rd_WB),
-        .RegWrite_EX(RegWrite_EX),
-        .RegWrite_MEM(RegWrite_MEM),
-        .RegWrite_WB(RegWrite_WB),
-        .MemRead_EX(MemRead_EX),
-        .RPzero_EX(RPzero_EX),
-        .RPzero_MEM(RPzero_MEM),
-        .RPzero_WB(RPzero_WB),
-        .ForwardA(ForwardA),
-        .ForwardB(ForwardB),
-        .Stall(Stall)
-    );
-
-    // Task for displaying state
-    task show;
-        begin
-            #1;
-            $display(
-                "Rs=%0d Rt=%0d | Rd_EX=%0d Rd_MEM=%0d Rd_WB=%0d | FA=%b FB=%b Stall=%b",
-                Rs, Rt, Rd_EX, Rd_MEM, Rd_WB, ForwardA, ForwardB, Stall
-            );
-        end
-    endtask
-
-    initial begin
-        $display("==== Hazard Unit Testbench ====");
-
-        // Default values
-        Rs = 0; Rt = 0;
-        Rd_EX = 0; Rd_MEM = 0; Rd_WB = 0;
-        RegWrite_EX = 0; RegWrite_MEM = 0; RegWrite_WB = 0;
-        MemRead_EX = 0;
-        RPzero_EX = 0; RPzero_MEM = 0; RPzero_WB = 0;
-
-        show;
-
-        // ------------------------------
-        // EX forwarding (Rs)
-        // ------------------------------
-        Rs = 5; Rt = 3;
-        Rd_EX = 5;
-        RegWrite_EX = 1;
-        show; // ForwardA = 01
-
-        // ------------------------------
-        // MEM forwarding (Rs)
-        // ------------------------------
-        RegWrite_EX = 0;
-        Rd_EX = 0;
-        Rd_MEM = 5;
-        RegWrite_MEM = 1;
-        show; // ForwardA = 10
-
-        // ------------------------------
-        // WB forwarding (Rs)
-        // ------------------------------
-        RegWrite_MEM = 0;
-        Rd_MEM = 0;
-        Rd_WB = 5;
-        RegWrite_WB = 1;
-        show; // ForwardA = 11
-
-        // ------------------------------
-        // Forwarding on Rt
-        // ------------------------------
-        Rs = 1; Rt = 7;
-        Rd_EX = 7;
-        RegWrite_EX = 1;
-        show; // ForwardB = 01
-
-        // ------------------------------
-        // Killed instruction (no forward)
-        // ------------------------------
-        RPzero_EX = 1;
-        show; // No forwarding
-
-        RPzero_EX = 0;
-        RegWrite_EX = 0;
-
-        // ------------------------------
-        // Load-use hazard (stall)
-        // ------------------------------
-        Rs = 4; Rt = 6;
-        Rd_EX = 4;
-        MemRead_EX = 1;
-        RegWrite_EX = 1;
-        show; // Stall = 1
-
-        // ------------------------------
-        // No stall when Rd_EX = 0
-        // ------------------------------
-        Rd_EX = 0;
-        show; // Stall = 0
-
-        // ------------------------------
-        // No stall if instruction killed
-        // ------------------------------
-        Rd_EX = 6;
-        RPzero_EX = 1;
-        show; // Stall = 0
-
-        // ------------------------------
-        // Cleanup
-        // ------------------------------
-        MemRead_EX = 0;
-        RegWrite_EX = 0;
-        RPzero_EX = 0;
-
-        $display("==== Test Complete ====");
         $finish;
     end
 
