@@ -8,3 +8,4 @@ i<>.\src\wb_stage.v
 i<>.\src\testbenches.v
 i<>.\src\mem_stage.v
 i<>.\src\ID_testbench.v
+i<>.\src\processor.v

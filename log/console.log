@@ -300,3 +300,37 @@ alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $d
 # done
 endsim
 # VSIM: Simulation has finished.
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v $dsn/src/buffers.v $dsn/src/if_stage.v $dsn/src/functional_units.v $dsn/src/wb_stage.v $dsn/src/testbenches.v $dsn/src/mem_stage.v $dsn/src/ID_testbench.v
+# Unit top modules: mux2 mux4 reset_sync ID_EX EX_MEM MEM_WB WriteBack tb_IF_stage tb_IF_ID tb_Execute tb_Hazard_Unit mem_stage ID_stage_detailed_tb.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/mem_stage.v
+# Unit top modules: mem_stage.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/wb_stage.v
+# Unit top modules: WriteBack.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/ex_stage.v
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/testbenches.v
+# Error: VCP2000 testbenches.v : (193, 4): Syntax error. Unexpected token: <<<[O_LASHIFT].
+# Error: VCP2000 testbenches.v : (346, 4): Syntax error. Unexpected token: ===[O_CEQU].
+# Error: VCP2000 testbenches.v : (489, 4): Syntax error. Unexpected token: <<<[O_LASHIFT].
+# Error: VCP7803 testbenches.v : (593, 18): Duplicated declaration of unit tb_Execute. Use "-err VCP7803 W1" to suppress this error.
+# Info: VCP7802 testbenches.v : (195, 18): ... see previous "tb_Execute" declaration.
+# Error: VCP2000 testbenches.v : (744, 4): Syntax error. Unexpected token: >>>[O_RASHIFT].
+# Compile failure 5 Errors 0 Warnings  Analysis time: 0[s].
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/testbenches.v
+# Unit top modules: tb_IF_stage tb_IF_ID tb_Hazard_Unit DataMemo_tb tb_Execute.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/testbenches.v
+# Unit top modules: tb_IF_stage tb_IF_ID tb_Hazard_Unit DataMemo_tb tb_Execute.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/ex_stage.v
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done

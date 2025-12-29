@@ -1,0 +1,1 @@
+WARNING VCP2597 "Some unconnected ports remain at instance: u_idex. Module ID_EX has unconnected  port(s) : RPzero_ID, RPzero_EX." "C:/Users/HP/OneDrive/Desktop/architecture/project2/proj/src/processor.v" 180 1
