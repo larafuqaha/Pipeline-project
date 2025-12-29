@@ -1,0 +1,45 @@
+																									  module Memory (
+    input clk,
+
+    // EX/MEM pipeline register inputs
+    input RegWrite_EX, memW, memR, 
+    input [1:0] WBdata,
+    input [4:0] D,
+    input [31:0] ALUout,
+    input [31:0] NPC3,
+	input [4:0] rd3
+ 
+
+    // Outputs to MEM/WB stage
+    output reg RegWrite_MEM,
+    output reg [4:0] Rd3_MEM,
+    output reg [31:0] WBdata_out  // Output to WB
+);
+
+    // Output from Data Memory
+    wire [31:0] memoOut;
+
+    // Instantiate Data Memory module
+    data_mem memory_inst (
+        .clk(clk),
+        .MemRead(memR),
+        .MemWrite(memW),
+        .Address(ALUout[15:0]),
+        .Data_in(D),
+        .Data_out(memoOut)
+    );
+
+    // Combinational logic to select outputs
+    
+     assign   RegWrite_MEM = RegWrite_EX;
+     assign   Rd3_MEM       = rd3;
+	   always @(*) begin
+        case (WBdata)
+            2'b00: WBdata_out = ALUout;
+            2'b01: WBdata_out = NPC3
+            2'b10: WBdata_out = memoOut;
+            default: WBdata_out = 32'b0;
+        endcase
+    end
+
+endmodule
