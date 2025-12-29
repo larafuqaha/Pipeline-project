@@ -6,3 +6,4 @@ i<>.\src\if_stage.v
 i<>.\src\functional_units.v
 i<>.\src\wb_stage.v
 i<>.\src\testbenches.v
+i<>.\src\mem_stage.v

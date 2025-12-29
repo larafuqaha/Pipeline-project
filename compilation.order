@@ -6,3 +6,4 @@
 .\src\functional_units.v
 .\src\wb_stage.v
 .\src\testbenches.v
+.\src\mem_stage.v

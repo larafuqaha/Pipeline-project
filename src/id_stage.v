@@ -368,7 +368,9 @@ module ID_stage (
     );
 
     wire Rpzero;
-    assign Rpzero = (BusP_raw == 32'b0);
+	// Rp == R0  ? unconditional execution ? NOT zero
+    // Rp != R0  ? zero only if BusP == 0
+	assign Rpzero = (Rp != 5'd0) && (BusP_raw == 32'b0); 
     assign RPzero_IDEX = Rpzero;
 
     assign PC_regRs = BusA_raw;
