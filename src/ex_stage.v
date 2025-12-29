@@ -31,10 +31,11 @@ module Execute (
     input [2:0]  ALUop_ID,
 
     input [31:0] npc2,
-    input [31:0] imm12,
+    input [31:0] imm,
     input [31:0] A,
     input [31:0] B,
-    input [3:0]  rd2,
+    input [3:0]  rd2,	 
+	input  wire   RPzero_ID,
 
     // -------- outputs to MEM stage (EX/MEM) --------
     output reg        RegWr_EX,
@@ -42,12 +43,17 @@ module Execute (
     output reg        MemRd_EX,
     output reg [1:0]  WBdata_EX,
 
-    output reg [31:0] ALUout,
+    output reg [31:0] ALUout_EX,
     output reg [31:0] D,
     output reg [31:0] npc3,
-    output reg [3:0]  rd3
+    output reg [3:0]  rd3,	
+	output reg         RPzero_EX
 );
 
+
+	wire [31:0] ALU_B;
+    assign ALU_B = (ALUSrc_ID) ? imm : B;
+	
     // ALU output (combinational)
     wire [31:0] alu_out;
 
@@ -55,13 +61,13 @@ module Execute (
     ALU alu_inst (
         .ALUop (ALUop_ID),
         .A     (A),
-        .B     (ALUSrc_ID ? imm12 : B),
+        .B     (ALU_B),
         .ALUout(alu_out)
     );
 
     // EX/MEM pipeline register
     always @(posedge clk) begin
-        ALUout    <= alu_out;
+        ALUout_EX    <= alu_out;
         D         <= B;
         npc3      <= npc2;
         rd3       <= rd2;
@@ -69,7 +75,8 @@ module Execute (
         RegWr_EX  <= RegWr_ID;
         MemWr_EX  <= MemWr_ID;
         MemRd_EX  <= MemRd_ID;
-        WBdata_EX <= WBdata_ID;
+        WBdata_EX <= WBdata_ID;	  
+		RPzero_EX    <= RPzero_ID;
     end
 
 endmodule
