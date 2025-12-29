@@ -337,7 +337,7 @@ module DataMemo_tb;
     reg         clk;
     reg         MemRd;
     reg         MemWr_final;
-    reg  [31:0] Address;
+    reg  [5:0] Address;
     reg  [31:0] Data_in;
     wire [31:0] Data_out;
 
