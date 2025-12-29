@@ -1,45 +1,60 @@
-module Memory (
-    input clk,
+module mem_stage (
+    input  wire        clk,
+    input  wire        reset,
 
-    // EX/MEM pipeline register inputs
-    input RegWrite_EX, memW, memR, 
-    input [1:0] WBdata,
-    input [4:0] D,
-    input [31:0] ALUout,
-    input [31:0] NPC3,
-	input [4:0] rd3
- 
 
-    // Outputs to MEM/WB stage
-    output reg RegWrite_MEM,
-    output reg [4:0] Rd3_MEM,
-    output reg [31:0] WBdata_out  // Output to WB
+    input  wire        RegWrite_EX,
+    input  wire        memW,
+    input  wire        memR,
+    input  wire [1:0]  WBdata,
+
+    input  wire [31:0] D,
+    input  wire [31:0] ALUout,
+    input  wire [31:0] NPC3,
+    input  wire [4:0]  rd3,
+
+    // Outputs to MEM/WB stage (pipeline-latched)
+    output reg         RegWrite_MEM,
+    output reg [4:0]   Rd3_MEM,
+    output reg [31:0]  WBdata_out
 );
 
     // Output from Data Memory
     wire [31:0] memoOut;
 
-    // Instantiate Data Memory module
-    data_mem memory_inst (
-        .clk(clk),
-        .MemRead(memR),
-        .MemWrite(memW),
-        .Address(ALUout[15:0]),
-        .Data_in(D),
-        .Data_out(memoOut)
+    // Data Memory
+    DataMemo memory_inst (
+        .clk      (clk),
+        .MemRd  (memR),
+        .MemWr_final (memW),
+
+        // If ALUout is WORD address -> keep [15:0]
+        .Address  (ALUout[15:0])
+        // If ALUout is BYTE address -> use this instead:
+        // .Address(ALUout[17:2])
+
+        ,
+        .Data_in  (D),
+        .Data_out (memoOut)
     );
 
-    // Combinational logic to select outputs
-    
-     assign   RegWrite_MEM = RegWrite_EX;
-     assign   Rd3_MEM       = rd3;
-	   always @(*) begin
-        case (WBdata)
-            2'b00: WBdata_out = ALUout;
-            2'b01: WBdata_out = NPC3
-            2'b10: WBdata_out = memoOut;
-            default: WBdata_out = 32'b0;
-        endcase
+    // MEM/WB pipeline register (everything latched on clk)
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            RegWrite_MEM <= 1'b0;
+            Rd3_MEM      <= 5'd0;
+            WBdata_out   <= 32'd0;
+        end else begin
+            RegWrite_MEM <= RegWrite_EX;
+            Rd3_MEM      <= rd3;
+
+            case (WBdata)
+                2'b00: WBdata_out <= ALUout;
+                2'b01: WBdata_out <= memoOut;
+                2'b10: WBdata_out <= NPC3;
+                default: WBdata_out <= 32'd0;
+            endcase
+        end
     end
 
 endmodule
