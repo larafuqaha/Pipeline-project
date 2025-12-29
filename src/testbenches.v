@@ -1216,3 +1216,104 @@ module ID_stage (
     assign WBdata_IDEX = bubble ? 2'b00   : WBdata_control;
 
 endmodule
+module DataMemo_tb;
+
+    reg         clk;
+    reg         MemRd;
+    reg         MemWr_final;
+    reg  [31:0] Address;
+    reg  [31:0] Data_in;
+    wire [31:0] Data_out;
+
+    DataMemo dut (
+        .clk(clk),
+        .MemRd(MemRd),
+        .MemWr_final(MemWr_final),
+        .Address(Address),
+        .Data_in(Data_in),
+        .Data_out(Data_out)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0;
+        MemRd = 0;
+        MemWr_final = 0;
+        Address = 0;
+        Data_in = 0;
+
+        // --------------------------------
+        // Test 1: Write to memory
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 1;
+        Address = 10;
+        Data_in = 32'hAAAA5555;
+
+        @(posedge clk);
+        MemWr_final = 0;
+
+        // --------------------------------
+        // Test 2: Read from same address
+        // --------------------------------
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T1 | Read Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        // --------------------------------
+        // Test 3: Read disabled
+        // --------------------------------
+        MemRd = 0;
+        #1;
+        $display("T2 | Read disabled = %h (expect 00000000)", Data_out);
+
+        // --------------------------------
+        // Test 4: Write to another address
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 1;
+        Address = 20;
+        Data_in = 32'h12345678;
+
+        @(posedge clk);
+        MemWr_final = 0;
+
+        // --------------------------------
+        // Test 5: Read second address
+        // --------------------------------
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T3 | Read Addr 20 = %h (expect 12345678)", Data_out);
+
+        // --------------------------------
+        // Test 6: Ensure first address unchanged
+        // --------------------------------
+        Address = 10;
+        #1;
+        $display("T4 | Read Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        // --------------------------------
+        // Test 7: Write disabled (no change)
+        // --------------------------------
+        @(negedge clk);
+        MemWr_final = 0;
+        Address = 10;
+        Data_in = 32'hFFFFFFFF;
+
+        @(posedge clk);
+
+        #1;
+        MemRd = 1;
+        #1;
+        $display("T5 | Write disabled, Addr 10 = %h (expect AAAA5555)", Data_out);
+
+        #10;
+        $stop;
+    end
+
+endmodule
+
