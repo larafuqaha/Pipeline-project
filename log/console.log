@@ -1,63 +1,440 @@
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/controlunit.v $dsn/src/EX.v $dsn/src/ALU.v $dsn/src/common.v
-# Unit top modules: Execute mux2 mux3 mux4 reset_sync Hazard_Unit.
-# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
-# done
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/controlunit.v $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v
-# Error: VCP7803 id_stage.v : (2, 20): Duplicated declaration of unit control_unit. Use "-err VCP7803 W1" to suppress this error.
-# Info: VCP7802 controlunit.v : (6, 20): ... see previous "control_unit" declaration.
-# Warning: VCP2515 id_stage.v : (363, 7): Undefined module: PCctrl was used. Port connection rules will not be checked at such instantiations.
-# Compile failure 1 Errors 1 Warnings  Analysis time: 0[s].
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v
-# Warning: VCP2515 id_stage.v : (363, 7): Undefined module: PCctrl was used. Port connection rules will not be checked at such instantiations.
-# Error: VCP2000 common.v : (90, 14): Syntax error. Unexpected token: ).
-# Error: VCP2000 common.v : (112, 14): Syntax error. Unexpected token: ).
-# Compile failure 2 Errors 1 Warnings  Analysis time: 0[s].
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v
-# Warning: VCP2515 id_stage.v : (363, 7): Undefined module: PCctrl was used. Port connection rules will not be checked at such instantiations.
-# Error: VCP2000 common.v : (90, 14): Syntax error. Unexpected token: ).
-# Error: VCP2000 common.v : (112, 14): Syntax error. Unexpected token: ).
-# Compile failure 2 Errors 1 Warnings  Analysis time: 1[s].
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v
-# Unit top modules: mux2 mux3 mux4 reset_sync Hazard_Unit.
-# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
-# done
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/ex_stage.v
-# Unit top modules: Execute ex_mem.
-# Compile success 0 Errors 0 Warnings  Analysis time: 1[s].
-# done
 alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/id_stage.v
-# Warning: VCP2515 id_stage.v : (363, 7): Undefined module: PCctrl was used. Port connection rules will not be checked at such instantiations.
-# Unit top modules: pc_control ID_stage.
-# Compile success 0 Errors 1 Warnings  Analysis time: 0[s].
+# Unit top modules: ID_stage.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/buffers.v
+# Unit top modules: IF_ID EX_MEM MEM_WB ID_EX.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
 # done
 alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/id_stage.v
 # Unit top modules: ID_stage.
 # Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
 # done
 alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/buffers.v
-# Error: VCP2000 buffers.v : (106, 11): Syntax error. Unexpected token: output[_OUTPUT].
-# Error: VCP2000 buffers.v : (107, 2): Syntax error. Unexpected token: ).
-# Error: VCP2020 buffers.v : (125, 12): begin...end pair(s) mismatch detected. 1 <end> tokens are missing.
-# Error: VCP2020 buffers.v : (125, 12): module/macromodule...endmodule pair(s) mismatch detected. 1 <endmodule> tokens are missing.
-# Error: VCP2000 buffers.v : (125, 12): Syntax error. Unexpected token: end[_END].
-# Error: VCP2000 buffers.v : (141, 12): Syntax error. Unexpected token: end[_END].
-# Compile failure 6 Errors 0 Warnings  Analysis time: 0[s].
+# Unit top modules: IF_ID EX_MEM MEM_WB ID_EX.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
 alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/buffers.v
-# Unit top modules: EX_MEM MEMWB IF_ID ID_EX.
+# Unit top modules: IF_ID ID_EX EX_MEM MEM_WB.
 # Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
 # done
 alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/if_stage.v
-# Warning: VCP2515 if_stage.v : (45, 7): Undefined module: InstructionMemory was used. Port connection rules will not be checked at such instantiations.
-# Unit top modules: Fetch.
-# Compile success 0 Errors 1 Warnings  Analysis time: 0[s].
-# done
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/id_stage.v
-# Unit top modules: ID_stage.
+# Unit top modules: tb_IF_stage.
 # Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
 # done
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/buffers.v
-# Unit top modules: EX_MEM MEMWB IF_ID ID_EX.
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "InstructionMemo" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/if_stage.v
+# Unit top modules: tb_IF_stage.
 # Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
 # done
-alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/buffers.v
-# Unit top modules: EX_MEM MEM_WB IF_ID ID_EX.
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "InstructionMemo" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.1 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 1.0 [s]
+# SLP: Finished : 1.1 [s]
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 1.3 [s].
+# KERNEL: SLP loading done - time: 0.2 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5387 kB (elbread=427 elab2=4824 kernel=135 sdf=0)
+# ASDB: Error: remove: "C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdbw\current": Access is denied. 
+# VSIM: Error: Fatal error occurred during simulation.
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "InstructionMemo" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Finished. Using existing simulator library
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.0 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5387 kB (elbread=427 elab2=4824 kernel=135 sdf=0)
+# ASDB: Error: remove: "C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdbw\current": Access is denied. 
+# VSIM: Error: Fatal error occurred during simulation.
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "InstructionMemo" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Finished. Using existing simulator library
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.0 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5387 kB (elbread=427 elab2=4824 kernel=135 sdf=0)
+# ASDB: Error: remove: "C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdbw\current": Access is denied. 
+# VSIM: Error: Fatal error occurred during simulation.
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v $dsn/src/buffers.v $dsn/src/if_stage.v $dsn/src/functional_units.v $dsn/src/wb_stage.v
+# Unit top modules: mux2 mux4 reset_sync Execute ex_mem ID_stage IF_ID ID_EX EX_MEM MEM_WB tb_IF_stage DataMemo WriteBack.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.0 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 0.3 [s]
+# SLP: Finished : 0.4 [s]
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.4 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5387 kB (elbread=427 elab2=4824 kernel=135 sdf=0)
+# KERNEL: ASDB file was created in location C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdb
+#  5:28 PM, Monday, December 29, 2025
+#  Simulation has been initialized
+run
+# KERNEL: ==== IF STAGE TEST START ====
+# KERNEL: Normal fetch
+# KERNEL: PC=2 Instr=28040003 NPC=2
+# KERNEL: PC=3 Instr=00061100 NPC=3
+# KERNEL: PC=4 Instr=08081100 NPC=4
+# KERNEL: PC stall
+# KERNEL: PC=4 (should NOT change)
+# KERNEL: IR stall
+# KERNEL: Instr=480a300f (should NOT change)
+# KERNEL: Kill instruction
+# KERNEL: Instr=00000000 (should be NOP)
+# KERNEL: PCsrc = PC + offset
+# KERNEL: PC=9 (should jump)
+# KERNEL: PCsrc = JR
+# KERNEL: PC=10 (should be 10)
+# KERNEL: ==== IF STAGE TEST END ====
+# RUNTIME: Info: RUNTIME_0068 if_stage.v (183): $finish called.
+# KERNEL: Time: 96 ns,  Iteration: 0,  Instance: /tb_IF_stage,  Process: @INITIAL#112_1@.
+# KERNEL: stopped at time: 96 ns
+# VSIM: Simulation has finished. There are no more test vectors to simulate.
+endsim
+# VSIM: Simulation has finished.
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v $dsn/src/buffers.v $dsn/src/if_stage.v $dsn/src/functional_units.v $dsn/src/wb_stage.v
+# Unit top modules: mux2 mux4 reset_sync Execute ex_mem ID_stage tb_IF_ID ID_EX EX_MEM MEM_WB tb_IF_stage DataMemo WriteBack.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_ID" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_ID tb_IF_ID
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_ID" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.0 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 0.5 [s]
+# SLP: Finished : 0.5 [s]
+# SLP: 0 primitives and 3 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 14 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.6 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5375 kB (elbread=427 elab2=4813 kernel=134 sdf=0)
+# ASDB: Error: remove: "C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdbw\current": Access is denied. 
+# VSIM: Error: Fatal error occurred during simulation.
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_ID tb_IF_ID
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_ID" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Finished. Using existing simulator library
+# SLP: 0 primitives and 3 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 14 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.0 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5375 kB (elbread=427 elab2=4813 kernel=134 sdf=0)
+# KERNEL: ASDB file was created in location C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdb
+#  6:15 PM, Monday, December 29, 2025
+#  Simulation has been initialized
+run
+# KERNEL: ==== IF_ID TEST START ====
+# KERNEL: Cycle 1:
+# KERNEL:  Instr_D=aaaaaaaa NPC_D=1
+# KERNEL: Cycle 2:
+# KERNEL:  Instr_D=bbbbbbbb NPC_D=2
+# KERNEL: Cycle 3 (stall):
+# KERNEL:  Instr_D=bbbbbbbb NPC_D=2 (should NOT change)
+# KERNEL: Cycle 4 (kill):
+# KERNEL:  Instr_D=00000000 NPC_D=4 (Instr should be NOP)
+# KERNEL: Cycle 5:
+# KERNEL:  Instr_D=eeeeeeee NPC_D=5
+# KERNEL: ==== IF_ID TEST END ====
+# RUNTIME: Info: RUNTIME_0068 buffers.v (113): $finish called.
+# KERNEL: Time: 46 ns,  Iteration: 0,  Instance: /tb_IF_ID,  Process: @INITIAL#49_1@.
+# KERNEL: stopped at time: 46 ns
+# VSIM: Simulation has finished. There are no more test vectors to simulate.
+endsim
+# VSIM: Simulation has finished.
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/if_stage.v
+# Unit top modules: tb_IF_stage.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.0 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 0.4 [s]
+# SLP: Finished : 0.5 [s]
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.5 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5387 kB (elbread=427 elab2=4824 kernel=135 sdf=0)
+# KERNEL: ASDB file was created in location C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdb
+#  6:17 PM, Monday, December 29, 2025
+#  Simulation has been initialized
+run
+# KERNEL: ==== IF STAGE TEST START ====
+# KERNEL: Normal fetch
+# KERNEL: PC=2 Instr=28040003 NPC=2
+# KERNEL: PC=3 Instr=00061100 NPC=3
+# KERNEL: PC=4 Instr=08081100 NPC=4
+# KERNEL: PC stall
+# KERNEL: PC=4 (should NOT change)
+# KERNEL: IR stall
+# KERNEL: Instr=480a300f (should NOT change)
+# KERNEL: Kill instruction
+# KERNEL: Instr=00000000 (should be NOP)
+# KERNEL: PCsrc = PC + offset
+# KERNEL: PC=9 (should jump)
+# KERNEL: PCsrc = JR
+# KERNEL: PC=10 (should be 10)
+# KERNEL: ==== IF STAGE TEST END ====
+# RUNTIME: Info: RUNTIME_0068 if_stage.v (183): $finish called.
+# KERNEL: Time: 171 ns,  Iteration: 0,  Instance: /tb_IF_stage,  Process: @INITIAL#112_1@.
+# KERNEL: stopped at time: 171 ns
+# VSIM: Simulation has finished. There are no more test vectors to simulate.
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v $dsn/src/buffers.v $dsn/src/if_stage.v $dsn/src/functional_units.v $dsn/src/wb_stage.v
+# Unit top modules: mux2 mux4 reset_sync Execute ex_mem ID_stage tb_IF_ID ID_EX EX_MEM MEM_WB tb_IF_stage DataMemo WriteBack.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+endsim
+# VSIM: Simulation has finished.
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_IF_stage tb_IF_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "mux3" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.0 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 0.3 [s]
+# SLP: Finished : 0.4 [s]
+# SLP: 0 primitives and 8 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 33 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.4 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5385 kB (elbread=427 elab2=4823 kernel=135 sdf=0)
+# KERNEL: ASDB file was created in location C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdb
+#  6:24 PM, Monday, December 29, 2025
+#  Simulation has been initialized
+run
+# KERNEL: T=0 | PC=0 | Instr=xxxxxxxx | NPC=x | dPC=0 dIR=0 KILL=0 PCsrc=00
+# KERNEL: T=5000 | PC=0 | Instr=28020005 | NPC=1 | dPC=0 dIR=0 KILL=0 PCsrc=00
+# KERNEL: T=15000 | PC=1 | Instr=28020005 | NPC=1 | dPC=0 dIR=0 KILL=0 PCsrc=00
+# KERNEL: T=25000 | PC=2 | Instr=28040003 | NPC=2 | dPC=0 dIR=0 KILL=0 PCsrc=00
+# KERNEL: T=35000 | PC=3 | Instr=00061100 | NPC=3 | dPC=1 dIR=0 KILL=0 PCsrc=00
+# KERNEL: T=45000 | PC=3 | Instr=08081100 | NPC=4 | dPC=0 dIR=1 KILL=0 PCsrc=00
+# KERNEL: T=55000 | PC=4 | Instr=08081100 | NPC=4 | dPC=0 dIR=0 KILL=1 PCsrc=00
+# KERNEL: T=65000 | PC=5 | Instr=00000000 | NPC=5 | dPC=0 dIR=0 KILL=0 PCsrc=01
+# KERNEL: T=75000 | PC=7 | Instr=300c40f0 | NPC=6 | dPC=0 dIR=0 KILL=0 PCsrc=10
+# KERNEL: T=85000 | PC=10 | Instr=58060000 | NPC=8 | dPC=0 dIR=0 KILL=0 PCsrc=00
+# RUNTIME: Info: RUNTIME_0068 if_stage.v (155): $finish called.
+# KERNEL: Time: 95 ns,  Iteration: 0,  Instance: /tb_IF_stage,  Process: @INITIAL#103_2@.
+# KERNEL: stopped at time: 95 ns
+# VSIM: Simulation has finished. There are no more test vectors to simulate.
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "IF_ID" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+alog -O2 -sve -msg 5 -sv2k17 -work proj $dsn/src/common.v $dsn/src/ex_stage.v $dsn/src/id_stage.v $dsn/src/buffers.v $dsn/src/if_stage.v $dsn/src/functional_units.v $dsn/src/wb_stage.v $dsn/src/testbenches.v
+# Unit top modules: mux2 mux4 reset_sync Execute ex_mem ID_EX EX_MEM MEM_WB DataMemo WriteBack tb_IF_stage tb_IF_ID tb_ID_stage.
+# Compile success 0 Errors 0 Warnings  Analysis time: 0[s].
+# done
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "ID_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "control_unit" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "RegisterFile" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "extender" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "pc_control" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "Hazard_Unit" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+asim -O5 +access +w_nets +accb +accr +access +r +m+tb_ID_stage tb_ID_stage
+# ELBREAD: Elaboration process.
+# ELBREAD: Warning: ELBREAD_0049 The "ID_stage" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "control_unit" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "RegisterFile" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "extender" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "pc_control" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Warning: ELBREAD_0049 The "Hazard_Unit" design unit does not have a time unit/precision defined but other design units do.
+# ELBREAD: Elaboration time 0.0 [s].
+# VSIM: Stack memory: 32MB
+# VSIM: Retval memory: 32MB
+# 
+# KERNEL: Main thread initiated.
+# KERNEL: Kernel process initialization phase.
+# ELAB2: Elaboration final pass...
+# ELAB2: Create instances ...
+# KERNEL: Time resolution set to 1ps.
+# ELAB2: Create instances complete.
+# SLP: Started
+# SLP: Elaboration phase ...
+# SLP: Elaboration phase ... done : 0.0 [s]
+# SLP: Generation phase ...
+# SLP: Generation phase ... done : 0.3 [s]
+# SLP: Finished : 0.4 [s]
+# SLP: 0 primitives and 42 (100.00%) other processes in SLP
+# SLP: 0 signals in SLP and 156 (100.00%) interface signals
+# ELAB2: Elaboration final pass complete - time: 0.4 [s].
+# KERNEL: SLP loading done - time: 0.0 [s].
+# KERNEL: Warning: You are using the Active-HDL Student Edition. The performance of simulation is running at a reduced rate.
+# KERNEL: Warning: Contact Aldec for available upgrade options - sales@aldec.com.
+# KERNEL: SLP simulation initialization done - time: 0.0 [s].
+# KERNEL: Kernel process initialization done.
+# Allocation: Simulator allocated 5418 kB (elbread=427 elab2=4855 kernel=135 sdf=0)
+# KERNEL: ASDB file was created in location C:\Users\HP\OneDrive\Desktop\architecture\project2\proj\src\wave.asdb
+#  7:02 PM, Monday, December 29, 2025
+#  Simulation has been initialized
+run
+# KERNEL: T=0 | opcode=0 | Stall=0 | RegWr=0 MemWr=0 | A=00000001 B=00000007 | PCsrc=00 KILL=0
+# KERNEL: T=10000 | opcode=0 | Stall=0 | RegWr=1 MemWr=0 | A=00000006 B=00000000 | PCsrc=00 KILL=0
+# KERNEL: T=15000 | opcode=0 | Stall=0 | RegWr=0 MemWr=0 | A=00000006 B=00000000 | PCsrc=00 KILL=0
+# KERNEL: T=40000 | opcode=11 | Stall=0 | RegWr=0 MemWr=0 | A=00000000 B=00000000 | PCsrc=00 KILL=0
+# RUNTIME: Info: RUNTIME_0068 testbenches.v (359): $finish called.
+# KERNEL: Time: 50 ns,  Iteration: 0,  Instance: /tb_ID_stage,  Process: @INITIAL#287_2@.
+# KERNEL: stopped at time: 50 ns
+# VSIM: Simulation has finished. There are no more test vectors to simulate.
+endsim
+# VSIM: Simulation has finished.

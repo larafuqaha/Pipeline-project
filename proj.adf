@@ -24,6 +24,7 @@ FAMILY=
 /if_stage.v=-1
 /functional_units.v=-1
 /wb_stage.v=-1
+/testbenches.v=-1
 [Files.Data]
 .\src\common.v=Verilog Source Code
 .\src\ex_stage.v=Verilog Source Code
@@ -32,6 +33,7 @@ FAMILY=
 .\src\if_stage.v=Verilog Source Code
 .\src\functional_units.v=Verilog Source Code
 .\src\wb_stage.v=Verilog Source Code
+.\src\testbenches.v=Verilog Source Code
 [HierarchyViewer]
 HierarchyInformation=
 ShowHide=ShowTopLevel

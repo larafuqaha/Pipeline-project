@@ -64,3 +64,4 @@ module IF_stage (
     end
 
 endmodule
+

@@ -12,7 +12,64 @@ module IF_ID(
       NPC_D <= NPC_F;
     end
   end
+endmodule	
+
+
+
+//======================================================
+// ID / EX Pipeline Register
+//======================================================
+module ID_EX (
+    input  wire        clk,
+
+    // -------- Control signals from ID --------
+    input  wire        RegWr_ID,
+    input  wire        MemWr_ID,
+    input  wire        MemRd_ID,
+    input  wire        ALUSrc_ID,
+    input  wire [2:0]  ALUop_ID,
+    input  wire [1:0]  WBdata_ID,
+
+    // -------- Data signals from ID --------
+    input  wire [31:0] A_ID,
+    input  wire [31:0] B_ID,
+    input  wire [31:0] Imm_ID,
+    input  wire [31:0] NPC_ID,
+    input  wire [4:0]  Rd_ID,
+
+    // -------- Outputs to EX stage --------
+    output reg         RegWr_EX,
+    output reg         MemWr_EX,
+    output reg         MemRd_EX,
+    output reg         ALUSrc_EX,
+    output reg  [2:0]  ALUop_EX,
+    output reg  [1:0]  WBdata_EX,
+
+    output reg  [31:0] A_EX,
+    output reg  [31:0] B_EX,
+    output reg  [31:0] Imm_EX,
+    output reg  [31:0] NPC_EX,
+    output reg  [4:0]  Rd_EX
+);
+
+    always @(posedge clk) begin
+    	RegWr_EX  <= RegWr_ID;
+    	MemWr_EX  <= MemWr_ID;
+    	MemRd_EX  <= MemRd_ID;
+    	ALUSrc_EX <= ALUSrc_ID;
+    	ALUop_EX  <= ALUop_ID;
+    	WBdata_EX <= WBdata_ID;
+
+    	A_EX      <= A_ID;
+    	B_EX      <= B_ID;
+    	Imm_EX    <= Imm_ID;
+    	NPC_EX    <= NPC_ID;
+    	Rd_EX     <= Rd_ID;
+	end
+
+
 endmodule
+
 
 // EX / MEM Pipeline Register
 module EX_MEM (
@@ -78,75 +135,3 @@ module MEM_WB (
 
 endmodule
 
-//======================================================
-// ID / EX Pipeline Register
-//======================================================
-module ID_EX (
-    input  wire        clk,
-    input  wire        stall,
-
-    // -------- Control signals from ID --------
-    input  wire        RegWr_ID,
-    input  wire        MemWr_ID,
-    input  wire        MemRd_ID,
-    input  wire        ALUSrc_ID,
-    input  wire [2:0]  ALUop_ID,
-    input  wire [1:0]  WBdata_ID,
-
-    // -------- Data signals from ID --------
-    input  wire [31:0] A_ID,
-    input  wire [31:0] B_ID,
-    input  wire [31:0] Imm_ID,
-    input  wire [31:0] NPC_ID,
-    input  wire [4:0]  Rd_ID,
-
-    // -------- Outputs to EX stage --------
-    output reg         RegWr_EX,
-    output reg         MemWr_EX,
-    output reg         MemRd_EX,
-    output reg         ALUSrc_EX,
-    output reg  [2:0]  ALUop_EX,
-    output reg  [1:0]  WBdata_EX,
-
-    output reg  [31:0] A_EX,
-    output reg  [31:0] B_EX,
-    output reg  [31:0] Imm_EX,
-    output reg  [31:0] NPC_EX,
-    output reg  [4:0]  Rd_EX
-);
-
-    always @(posedge clk) begin
-        if (stall) begin
-            // Bubble: zero control
-            RegWr_EX  <= 1'b0;
-            MemWr_EX  <= 1'b0;
-            MemRd_EX  <= 1'b0;
-            ALUSrc_EX <= 1'b0;
-            ALUop_EX  <= 3'b000;
-            WBdata_EX <= 2'b00;
-
-            // Data don't-care
-            A_EX      <= 32'd0;
-            B_EX      <= 32'd0;
-            Imm_EX    <= 32'd0;
-            NPC_EX    <= 32'd0;
-            Rd_EX     <= 5'd0;
-        end
-        else begin
-            // Normal latch
-            RegWr_EX  <= RegWr_ID;
-            MemWr_EX  <= MemWr_ID;
-            MemRd_EX  <= MemRd_ID;
-            ALUSrc_EX <= ALUSrc_ID;
-            ALUop_EX  <= ALUop_ID;
-            WBdata_EX <= WBdata_ID;
-
-            A_EX      <= A_ID;
-            B_EX      <= B_ID;
-            Imm_EX    <= Imm_ID;
-            NPC_EX    <= NPC_ID;
-            Rd_EX     <= Rd_ID;
-        end
-    end
-
-endmodule

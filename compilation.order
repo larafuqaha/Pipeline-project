@@ -5,3 +5,4 @@
 .\src\if_stage.v
 .\src\functional_units.v
 .\src\wb_stage.v
+.\src\testbenches.v

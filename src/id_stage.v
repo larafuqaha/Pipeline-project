@@ -132,6 +132,7 @@ module control_unit (
 
 endmodule
 
+
 module extender ( 
     input  wire [4:0]  opcode,
     input  wire [21:0] imm_in,     // [11:0] for I-type, [21:0] for J-type
@@ -160,6 +161,7 @@ module extender (
     end
 
 endmodule
+
 
 module pc_control (
     input  wire [4:0] Op,        // opcode
@@ -201,6 +203,7 @@ module pc_control (
     end
 
 endmodule
+
 
 module RegisterFile (
     input  wire        clk,
@@ -250,249 +253,219 @@ module RegisterFile (
 
 endmodule
 
+
+
 module ID_stage (
     input  wire        clk,
-    input  wire        reset,
+    //input  wire        reset,
 
-    // IF/ID inputs
-    input  wire [31:0] IR,
-    input  wire [31:0] NPC,              // pipelined PC+1
+    input  wire [31:0] Instruction_D,
+    input  wire [31:0] NPC_D,
 
-    // hazard unit
-    input  wire        stall,
-    input  wire [1:0]  ForwardA,
-    input  wire [1:0]  ForwardB,
-
-    // forwarding sources
-    input  wire [31:0] ALUResult_fwd,     // from EX/MEM
-    input  wire [31:0] MemResult_fwd,     // from MEM
-    input  wire [31:0] EBResult_fwd,      // from WB
-
-    // WB -> regfile
-    input  wire        RegWr_WB,
+    input  wire        RegWr_WB_final,
     input  wire [4:0]  Rd_WB,
     input  wire [31:0] BusW_WB,
 
-    // -------------------------
-    // outputs to IF stage
-    // -------------------------
-    output wire        PCWrite,
-    output wire        IRWrite,
+    input  wire [31:0] Fwd_EX,
+    input  wire [31:0] Fwd_MEM,
+    input  wire [31:0] Fwd_WB,
+
+    input  wire [4:0]  Rd_EX,
+    input  wire [4:0]  Rd_MEM,
+    input  wire [4:0]  Rd_WB_pipe,
+
+    input  wire        RegWrite_EX,
+    input  wire        RegWrite_MEM,
+    input  wire        RegWrite_WB,
+
+    input  wire        MemRead_EX,
+
+    input  wire        RPzero_EX,
+    input  wire        RPzero_MEM,
+    input  wire        RPzero_WB,
+
+    // -----------------------------
+    // Outputs back to IF stage control
+    // -----------------------------
     output wire [1:0]  PCsrc,
     output wire        KILL,
+    output wire [31:0] PC_offset,
+    output wire [31:0] PC_regRs,
 
-    output wire [31:0] JumpTarget_ID,
-    output wire [31:0] JRTarget_ID,
+    // Stall controls for IF + IF/ID
+    output wire        Stall,
+    output wire        disable_PC,
+    output wire        disable_IR,
 
-    // -------------------------
-    // ID/EX outputs
-    // -------------------------
-    output reg  [31:0] A_EX,
-    output reg  [31:0] B_EX,
-    output reg  [31:0] Imm_EX,
-    output reg  [31:0] NPC_EX,
+    // -----------------------------
+    // *** THESE ARE THE SIGNALS YOU ASKED FOR ***
+    // Generated in ID (after predication) and then pipelined forward
+    // -----------------------------
+    output wire        RegWr_final,   // RegWr_control & ~RPzero
+    output wire        MemWr_final,   // MemWr_control & ~RPzero
+    output wire        MemRd_final,   // MemRd_control & ~RPzero (recommended)
 
-    output reg  [4:0]  Rs_EX,
-    output reg  [4:0]  Rt_EX,
-    output reg  [4:0]  Rd_EX,
+    // -----------------------------
+    // Outputs into ID/EX register
+    // -----------------------------
+    output wire        RegWr_IDEX,
+    output wire        MemWr_IDEX,
+    output wire        MemRd_IDEX,
 
-    output reg         RegWr_EX,
-    output reg         MemWr_EX,
-    output reg         MemRd_EX,
-    output reg         ALUSrc_EX,
-    output reg  [2:0]  ALUop_EX,
-    output reg  [1:0]  WBdata_EX
+    output wire        ALUSrc_IDEX,
+    output wire [2:0]  ALUop_IDEX,
+    output wire [1:0]  WBdata_IDEX,
+
+    output wire [31:0] A_IDEX,
+    output wire [31:0] B_IDEX,
+    output wire [31:0] IMM_IDEX,
+    output wire [31:0] NPC2_IDEX,
+    output wire [4:0]  Rd2_IDEX,
+    output wire        RPzero_IDEX
 );
 
-    // --------------------------------------------------
-    // Instruction fields
-    // --------------------------------------------------
-    wire [4:0] opcode = IR[31:27];
-    wire [4:0] Rp     = IR[26:22];
-    wire [4:0] Rd     = IR[21:17];
-    wire [4:0] Rs     = IR[16:12];
-    wire [4:0] Rt     = IR[11:7];
+    // -------- fields --------
+    wire [4:0] opcode = Instruction_D[31:27];
+    wire [4:0] Rp     = Instruction_D[26:22];
+    wire [4:0] Rd     = Instruction_D[21:17];
+    wire [4:0] Rs     = Instruction_D[16:12];
+    wire [4:0] Rt     = Instruction_D[11:7];
+    wire [21:0] imm22 = Instruction_D[21:0];
 
-    wire [11:0] imm12 = IR[11:0];
-    wire [21:0] imm22 = IR[21:0];
-
-    // --------------------------------------------------
-    // Control unit (raw control)
-    // --------------------------------------------------
-    wire        RegWr_c, MemWr_c, MemRd_c;
-    wire        ALUSrc_c, ExtOp_c, RBSrc_c, RegDst_c;
-    wire [1:0]  WBdata_c;
-    wire [2:0]  ALUop_c;
+    // -------- main control (pre-gating) --------
+    wire        RegWr_control, MemWr_control, MemRd_control;
+    wire        ALUSrc_control, ExtOp_control, RBSrc_control, RegDst_control;
+    wire [1:0]  WBdata_control;
+    wire [2:0]  ALUop_control;
 
     control_unit CU (
         .opcode(opcode),
-        .RegWr_control(RegWr_c),
-        .MemWr_control(MemWr_c),
-        .MemRd(MemRd_c),
-        .ALUSrc(ALUSrc_c),
-        .ExtOp(ExtOp_c),
-        .RBSrc(RBSrc_c),
-        .RegDst(RegDst_c),
-        .WBdata(WBdata_c),
-        .ALUop(ALUop_c)
+        .RegWr_control(RegWr_control),
+        .MemWr_control(MemWr_control),
+        .MemRd(MemRd_control),
+        .ALUSrc(ALUSrc_control),
+        .ExtOp(ExtOp_control),
+        .RBSrc(RBSrc_control),
+        .RegDst(RegDst_control),
+        .WBdata(WBdata_control),
+        .ALUop(ALUop_control)
     );
 
-    // --------------------------------------------------
-    // B source register select (SW uses Rd)
-    // --------------------------------------------------
-    wire [4:0] Rt_eff = RBSrc_c ? Rd : Rt;
-
-    // --------------------------------------------------
-    // Register file
-    // --------------------------------------------------
-    wire [31:0] BusA, BusB, BusP;
+    // -------- regfile read + Rp comparator --------
+    wire [31:0] BusA_raw, BusB_raw, BusP_raw;
 
     RegisterFile RF (
         .clk(clk),
-        .RegWr_final(RegWr_WB),
+        .RegWr_final(RegWr_WB_final),
         .Rd(Rd_WB),
         .Rs(Rs),
-        .Rt(Rt_eff),
+        .Rt(Rt),
         .Rp(Rp),
         .BusW(BusW_WB),
-        .BusA(BusA),
-        .BusB(BusB),
-        .BusP(BusP)
+        .BusA(BusA_raw),
+        .BusP(BusP_raw),
+        .BusB(BusB_raw)
     );
 
-    // --------------------------------------------------
-    // Predicate logic
-    // Rpzero = 1 => instruction does NOT execute
-    // --------------------------------------------------
-    wire Rpzero = (Rp == 5'd0) ? 1'b0 : (BusP == 32'd0);
-    wire PredTrue = ~Rpzero;
+    wire Rpzero;
+    assign Rpzero = (BusP_raw == 32'b0);
+    assign RPzero_IDEX = Rpzero;
 
-    // --------------------------------------------------
-    // PC control unit (authoritative)
-    // --------------------------------------------------
-    wire [1:0] PCsrc_raw;
-    wire       KILL_raw;
+    assign PC_regRs = BusA_raw;
 
-    pc_control PCCTRL (
-        .Op(opcode),
-        .Rpzero(Rpzero),
-        .PCsrc(PCsrc_raw),
-        .KILL(KILL_raw)
-    );
-
-    // --------------------------------------------------
-    // Stall handling to IF stage
-    // --------------------------------------------------
-    assign PCWrite = ~stall;
-    assign IRWrite = ~stall;
-
-    assign PCsrc = stall ? 2'd0 : PCsrc_raw;
-    assign KILL  = stall ? 1'b0 : KILL_raw;
-
-    // --------------------------------------------------
-    // Jump targets
-    // --------------------------------------------------
-    assign JumpTarget_ID = { NPC[31:22], imm22 };
-    assign JRTarget_ID   = BusA;
-
-    // --------------------------------------------------
-    // Immediate extension (imm12 only)
-    // --------------------------------------------------
+    // -------- extender --------
     wire [31:0] imm_ext;
-
     extender EXT (
         .opcode(opcode),
-        .imm_in(IR[21:0]),
-        .ExtOp(ExtOp_c),
+        .imm_in(imm22),
+        .ExtOp(ExtOp_control),
         .imm_out(imm_ext)
     );
 
-    // --------------------------------------------------
-    // Decode-stage forwarding muxes
-    // ForwardA / ForwardB select what feeds A_EX / B_EX
-    // 0: BusA / BusB
-    // 1: ALUResult
-    // 2: MemResult
-    // 3: EBResult
-    // --------------------------------------------------
-    reg [31:0] A_sel, B_sel;
+    // -------- PC + offset (use NPC-1 as PC base) --------
+    wire [31:0] PC_base = NPC_D - 32'd1;
+    assign PC_offset    = PC_base + imm_ext;
+    assign NPC2_IDEX    = PC_offset;   // your NPC2 path
+
+    // -------- PC control --------
+    pc_control PCC (
+        .Op(opcode),
+        .Rpzero(Rpzero),
+        .PCsrc(PCsrc),
+        .KILL(KILL)
+    );
+
+    // -------- hazard unit --------
+    wire [1:0] ForwardA, ForwardB;
+
+    Hazard_Unit HU (
+        .Rs(Rs),
+        .Rt(Rt),
+        .Rd_EX(Rd_EX),
+        .Rd_MEM(Rd_MEM),
+        .Rd_WB(Rd_WB_pipe),
+        .RegWrite_EX(RegWrite_EX),
+        .RegWrite_MEM(RegWrite_MEM),
+        .RegWrite_WB(RegWrite_WB),
+        .MemRead_EX(MemRead_EX),
+        .RPzero_EX(RPzero_EX),
+        .RPzero_MEM(RPzero_MEM),
+        .RPzero_WB(RPzero_WB),
+        .ForwardA(ForwardA),
+        .ForwardB(ForwardB),
+        .Stall(Stall)
+    );
+
+    assign disable_PC = Stall;
+    assign disable_IR = Stall;
+
+    // -------- forwarding muxes --------
+    reg [31:0] A_fwd, B_fwd;
 
     always @(*) begin
         case (ForwardA)
-            2'd0: A_sel = BusA;
-            2'd1: A_sel = ALUResult_fwd;
-            2'd2: A_sel = MemResult_fwd;
-            2'd3: A_sel = EBResult_fwd;
-            default: A_sel = BusA;
+            2'b00: A_fwd = BusA_raw;
+            2'b01: A_fwd = Fwd_EX;
+            2'b10: A_fwd = Fwd_MEM;
+            2'b11: A_fwd = Fwd_WB;
         endcase
     end
 
     always @(*) begin
         case (ForwardB)
-            2'd0: B_sel = BusB;
-            2'd1: B_sel = ALUResult_fwd;
-            2'd2: B_sel = MemResult_fwd;
-            2'd3: B_sel = EBResult_fwd;
-            default: B_sel = BusB;
+            2'b00: B_fwd = BusB_raw;
+            2'b01: B_fwd = Fwd_EX;
+            2'b10: B_fwd = Fwd_MEM;
+            2'b11: B_fwd = Fwd_WB;
         endcase
     end
 
-    // --------------------------------------------------
-    // Predicate gating of controls
-    // --------------------------------------------------
-    wire RegWr_f   = RegWr_c  & PredTrue;
-    wire MemWr_f   = MemWr_c  & PredTrue;
-    wire MemRd_f   = MemRd_c  & PredTrue;
-    wire ALUSrc_f  = ALUSrc_c & PredTrue;
-    wire [2:0] ALUop_f  = PredTrue ? ALUop_c  : 3'd0;
-    wire [1:0] WBdata_f = PredTrue ? WBdata_c : 2'd0;
+    assign A_IDEX   = A_fwd;
+    assign B_IDEX   = B_fwd;
+    assign IMM_IDEX = imm_ext;
 
-    // --------------------------------------------------
-    // Destination register
-    // --------------------------------------------------
-    wire [4:0] DestReg =
-        MemWr_c  ? 5'd0 :
-        RegDst_c ? 5'd31 :
-                   Rd;
+    // -------- dest reg selection --------
+    wire [4:0] RB_sel  = (RBSrc_control) ? Rd : Rt;
+    wire [4:0] Rd2_sel = (RegDst_control) ? 5'd31 : RB_sel;
+    assign Rd2_IDEX = Rd2_sel;
 
-    // --------------------------------------------------
-    // ID/EX pipeline register
-    // --------------------------------------------------
-    always @(posedge clk) begin
-        if (reset || stall) begin
-            A_EX      <= 32'd0;
-            B_EX      <= 32'd0;
-            Imm_EX    <= 32'd0;
-            NPC_EX    <= 32'd0;
+    // -------- predication gating (THESE ARE THE "final" signals) --------
+    wire exec_en = ~Rpzero;
 
-            Rs_EX     <= 5'd0;
-            Rt_EX     <= 5'd0;
-            Rd_EX     <= 5'd0;
+    assign RegWr_final = RegWr_control & exec_en;
+    assign MemWr_final = MemWr_control & exec_en;
+    assign MemRd_final = MemRd_control & exec_en;
 
-            RegWr_EX  <= 1'b0;
-            MemWr_EX  <= 1'b0;
-            MemRd_EX  <= 1'b0;
-            ALUSrc_EX <= 1'b0;
-            ALUop_EX  <= 3'd0;
-            WBdata_EX <= 2'd0;
-        end
-        else begin
-            A_EX      <= A_sel;
-            B_EX      <= B_sel;
-            Imm_EX    <= imm_ext;
-            NPC_EX    <= NPC;
+    // -------- bubble injection on Stall --------
+    wire bubble = Stall;
 
-            Rs_EX     <= Rs;
-            Rt_EX     <= Rt_eff;
-            Rd_EX     <= DestReg;
+    assign RegWr_IDEX  = bubble ? 1'b0 : RegWr_final;
+    assign MemWr_IDEX  = bubble ? 1'b0 : MemWr_final;
+    assign MemRd_IDEX  = bubble ? 1'b0 : MemRd_final;
 
-            RegWr_EX  <= RegWr_f;
-            MemWr_EX  <= MemWr_f;
-            MemRd_EX  <= MemRd_f;
-            ALUSrc_EX <= ALUSrc_f;
-            ALUop_EX  <= ALUop_f;
-            WBdata_EX <= WBdata_f;
-        end
-    end
+    assign ALUSrc_IDEX = bubble ? 1'b0    : ALUSrc_control;
+    assign ALUop_IDEX  = bubble ? 3'b000  : ALUop_control;
+    assign WBdata_IDEX = bubble ? 2'b00   : WBdata_control;
 
 endmodule
+
