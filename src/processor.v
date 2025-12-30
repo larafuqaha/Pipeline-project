@@ -178,41 +178,39 @@ module Processor (
     // NOTE: ID_EX module you gave doesn't carry RPzero; we pipeline it separately.
 
     ID_EX u_idex (
-        .clk       (clk),
+		.clk       (clk),
 
-        .RegWr_ID  (RegWr_IDEX),
-        .MemWr_ID  (MemWr_IDEX),
-        .MemRd_ID  (MemRd_IDEX),
-        .ALUSrc_ID (ALUSrc_IDEX),
-        .ALUop_ID  (ALUop_IDEX),
-        .WBdata_ID (WBdata_IDEX),
+    	.RegWr_ID  (RegWr_IDEX),
+    	.MemWr_ID  (MemWr_IDEX),
+    	.MemRd_ID  (MemRd_IDEX),
+    	.ALUSrc_ID (ALUSrc_IDEX),
+    	.ALUop_ID  (ALUop_IDEX),
+    	.WBdata_ID (WBdata_IDEX),
 
-        .A_ID      (A_IDEX),
-        .B_ID      (B_IDEX),
-        .Imm_ID    (IMM_IDEX),
-        .NPC_ID    (NPC2_IDEX),
-        .Rd_ID     (Rd2_IDEX),
+    	.A_ID      (A_IDEX),
+    	.B_ID      (B_IDEX),
+    	.Imm_ID    (IMM_IDEX),
+    	.NPC_ID    (NPC2_IDEX),
+    	.Rd_ID     (Rd2_IDEX),
 
-        .RegWr_EX  (RegWr_EX),
-        .MemWr_EX  (MemWr_EX),
-        .MemRd_EX  (MemRd_EX),
-        .ALUSrc_EX (ALUSrc_EX),
-        .ALUop_EX  (ALUop_EX),
-        .WBdata_EX (WBdata_EX),
+    	.RPzero_ID (RPzero_IDEX),
 
-        .A_EX      (A_EX),
-        .B_EX      (B_EX),
-        .Imm_EX    (Imm_EX),
-        .NPC_EX    (NPC_EX),
-        .Rd_EX     (Rd_EX)
-    );
+    	.RegWr_EX  (RegWr_EX),
+    	.MemWr_EX  (MemWr_EX),
+    	.MemRd_EX  (MemRd_EX),
+    	.ALUSrc_EX (ALUSrc_EX),
+    	.ALUop_EX  (ALUop_EX),
+    	.WBdata_EX (WBdata_EX),
 
-    // pipeline RPzero into EX alongside ID/EX
-    reg RPzero_EX_reg;
-    always @(posedge clk or posedge rst_sync) begin
-        if (rst_sync) RPzero_EX_reg <= 1'b0;
-        else          RPzero_EX_reg <= RPzero_IDEX;
-    end
+    	.A_EX      (A_EX),
+    	.B_EX      (B_EX),
+    	.Imm_EX    (Imm_EX),
+    	.NPC_EX    (NPC_EX),
+    	.Rd_EX     (Rd_EX),
+
+    	.RPzero_EX (RPzero_EX)
+	);
+	
 
     // -----------------------------
     // Execute stage (your module includes EX->MEM register inside)
