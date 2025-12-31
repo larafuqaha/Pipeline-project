@@ -584,3 +584,119 @@ module tb_Execute;
     end
 
 endmodule
+`timescale 1ns/1ps
+
+module tb_mem_stage;
+
+    reg clk;
+    reg reset;
+
+    // -------- inputs from EX stage --------
+    reg        RegWrite_EX;
+    reg        memW;
+    reg        memR;
+    reg [1:0]  WBdata;
+
+    reg [31:0] D;
+    reg [31:0] ALUout;
+    reg [31:0] NPC3;
+    reg [4:0]  rd3;
+
+    // -------- outputs to WB stage --------
+    wire       RegWrite_MEM;
+    wire [4:0] Rd3_MEM;
+    wire [31:0] WBdata_out;
+
+    // -------- DUT --------
+    mem_stage dut (
+        .clk(clk),
+        .reset(reset),
+
+        .RegWrite_EX(RegWrite_EX),
+        .memW(memW),
+        .memR(memR),
+        .WBdata(WBdata),
+
+        .D(D),
+        .ALUout(ALUout),
+        .NPC3(NPC3),
+        .rd3(rd3),
+
+        .RegWrite_MEM(RegWrite_MEM),
+        .Rd3_MEM(Rd3_MEM),
+        .WBdata_out(WBdata_out)
+    );
+
+    // -------- clock --------
+    always #5 clk = ~clk;
+
+    // -------- monitor --------
+    initial begin
+        $monitor(
+            "T=%0t | memW=%b memR=%b WBsel=%b | ALU=%0d D=%0d NPC=%0d | WBout=%0d | Rd=%0d | RegWr=%b",
+            $time, memW, memR, WBdata,
+            ALUout, D, NPC3,
+            WBdata_out, Rd3_MEM, RegWrite_MEM
+        );
+    end
+
+    // -------- test sequence --------
+    initial begin
+        clk = 0;
+        reset = 1;
+
+        // defaults
+        RegWrite_EX = 0;
+        memW = 0;
+        memR = 0;
+        WBdata = 2'b00;
+        D = 0;
+        ALUout = 0;
+        NPC3 = 0;
+        rd3 = 0;
+
+        // -------- reset --------
+        #10;
+        reset = 0;
+
+        // -------- Test 1: ALU result writeback --------
+        @(posedge clk);
+        ALUout = 15;
+        rd3 = 5'd3;
+        WBdata = 2'b00;
+        RegWrite_EX = 1;
+
+        // -------- Test 2: Store word --------
+        @(posedge clk);
+        ALUout = 10;       // address
+        D = 32'hAAAA5555; // data
+        memW = 1;
+        RegWrite_EX = 0;
+
+        @(posedge clk);
+        memW = 0;
+
+        // -------- Test 3: Load word --------
+        @(posedge clk);
+        ALUout = 10;       // same address
+        memR = 1;
+        WBdata = 2'b01;
+        rd3 = 5'd4;
+        RegWrite_EX = 1;
+
+        @(posedge clk);
+        memR = 0;
+
+        // -------- Test 4: Write back NPC --------
+        @(posedge clk);
+        NPC3 = 32'd100;
+        WBdata = 2'b10;
+        rd3 = 5'd31;
+        RegWrite_EX = 1;
+
+        // -------- finish --------
+        #10;
+        $finish;
+    end
+
+endmodule
