@@ -2,40 +2,51 @@ module IF_stage (
     input  wire        clk,
     input  wire        reset,
 
-    // Control signals
-    input  wire        disable_PC,   // stall PC
-    input  wire        disable_IR,   // stall IF/ID
-    input  wire        KILL,          // flush instruction
-    input  wire [1:0]  PCsrc,         // PC select
+    // Control
+    input  wire        disable_PC,
+    input  wire        disable_IR,
+    input  wire        KILL,
+    input  wire [1:0]  PCsrc,
 
-    // Resolved PC inputs (from ID stage)
-    input  wire [31:0] PC_offset,     // PC + signext(offset)
-    input  wire [31:0] PC_regRs,       // Reg[Rs] (JR)
+    // PC inputs
+    input  wire [31:0] PC_offset,
+    input  wire [31:0] PC_regRs,
 
-    // Outputs to IF/ID
+    // Outputs
     output reg  [31:0] Instruction_F,
     output reg  [31:0] NPC_F,
-
-    // Program Counter (R30)
     output reg  [31:0] PC
-); 
+);
 
-      // PC + 1
-    wire [31:0] PC_plus1;
-    assign PC_plus1 = PC + 32'd1;
+    // -------------------------------------------------
+    // PC + 1 from CURRENT PC (for sequential path)
+    // -------------------------------------------------
+    wire [31:0] PC_plus1 = PC + 32'd1;
 
-     //  Next PC selection
-    wire [31:0] PC_next;
-
-    mux3 #(32) pc_mux (
-        .a(PC_plus1),    // PCsrc = 00
-        .b(PC_offset),   // PCsrc = 01
-        .c(PC_regRs),    // PCsrc = 10
-        .s(PCsrc),
-        .y(PC_next)
+    // -------------------------------------------------
+    // Instruction memory 
+    // -------------------------------------------------
+    wire [31:0] Instruction;
+    InstructionMemo IM (
+        .Address     (PC),
+        .Instruction (Instruction)
     );
 
-     // PC Register (R30)
+    // -------------------------------------------------
+    // Next PC selection
+    // -------------------------------------------------
+    wire [31:0] PC_next;
+    mux3 #(32) pc_mux (
+        .a (PC_plus1),   // 00: PC + 1
+        .b (PC_offset),  // 01: jump/call
+        .c (PC_regRs),   // 10: JR
+        .s (PCsrc),
+        .y (PC_next)
+    );
+
+    // -------------------------------------------------
+    // PC register
+    // -------------------------------------------------
     always @(posedge clk or posedge reset) begin
         if (reset)
             PC <= 32'd0;
@@ -43,25 +54,18 @@ module IF_stage (
             PC <= PC_next;
     end
 
-    // Instruction Memory
-    wire [31:0] Instruction;
-
-    InstructionMemo IM (
-        .Address(PC),
-        .Instruction(Instruction)
-    );
-
-    // IF / ID register outputs
-    always @(posedge clk) begin
-        if (!disable_IR) begin
-            if (KILL)
-                Instruction_F <= 32'h00000000; // NOP
-            else
-                Instruction_F <= Instruction;
-
-            NPC_F <= PC_plus1;
+    // -------------------------------------------------
+    // IF / ID latch
+    // -------------------------------------------------
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            Instruction_F <= 32'b0;
+            NPC_F         <= 32'b0;
+        end
+        else if (!disable_IR) begin
+            Instruction_F <= KILL ? 32'b0 : Instruction;
+            NPC_F         <= PC_plus1;  
         end
     end
 
 endmodule
-
