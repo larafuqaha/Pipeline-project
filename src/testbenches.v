@@ -700,3 +700,129 @@ module tb_mem_stage;
     end
 
 endmodule
+`timescale 1ns/1ps
+
+module tb_Processor_Forwarding;
+
+    // -------------------------
+    // Testbench signals
+    // -------------------------
+    reg clk;
+    reg rst_async;
+
+    // -------------------------
+    // Instantiate DUT
+    // -------------------------
+    Processor dut (
+        .clk       (clk),
+        .rst_async (rst_async)
+    );
+
+    // -------------------------
+    // Clock generation (10 ns)
+    // -------------------------
+    always #5 clk = ~clk;
+
+    // -------------------------
+    // Reset + runtime
+    // -------------------------
+    initial begin
+        clk = 0;
+        rst_async = 1;
+
+        // hold reset
+        #25;
+        rst_async = 0;
+
+        // run long enough to flush pipeline
+        #400;
+        $display("\n=== SIMULATION FINISHED ===");
+        $stop;
+    end
+
+    // =========================================================
+    // PIPELINE MONITOR (ONLY VALID SIGNALS)
+    // =========================================================
+    always @(posedge clk) begin
+        $display("\n--------------------------------------------------");
+        $display("TIME = %0t", $time);
+
+        // IF
+        $display("IF  : PC=%h Instr_F=%h NPC_F=%h",
+            dut.PC,
+            dut.Instruction_F,
+            dut.NPC_F
+        );
+
+        // IF/ID
+        $display("ID  : Instr_D=%h NPC_D=%h Stall=%b KILL=%b",
+            dut.Instruction_D,
+            dut.NPC_D,
+            dut.Stall,
+            dut.KILL
+        );
+
+        // ID/EX
+        $display("ID/EX: A=%h B=%h IMM=%h Rd=%0d RPzero=%b",
+            dut.A_IDEX,
+            dut.B_IDEX,
+            dut.IMM_IDEX,
+            dut.Rd2_IDEX,
+            dut.RPzero_IDEX
+        );
+
+        // EX
+        $display("EX  : ALUout=%h D=%h Rd=%0d RegWr=%b MemRd=%b MemWr=%b RPzero=%b",
+            dut.ALUout_EXM,
+            dut.D_EXM,
+            dut.rd3_EXM,
+            dut.RegWr_EXM,
+            dut.MemRd_EXM,
+            dut.MemWr_EXM,
+            dut.RPzero_EXM
+        );
+
+        // MEM
+        $display("MEM : WBdata=%h Rd=%0d RegWrite=%b",
+            dut.WBdata_out_MEM,
+            dut.Rd3_MEM,
+            dut.RegWrite_MEM
+        );
+
+        // WB
+        $display("WB  : WriteData=%h Rd=%0d RegWrite=%b RPzero=%b",
+            dut.BusW_WB_final,
+            dut.Rd_WB_final,
+            dut.RegWr_WB_final,
+            dut.RPzero_WB_reg
+        );
+    end
+
+    // =========================================================
+    // REGISTER WRITE WATCH (KEY FOR FORWARDING)
+    // =========================================================
+    always @(posedge clk) begin
+        if (dut.RegWr_WB_final) begin
+            $display(">>> REG WRITE: R[%0d] <= %h",
+                dut.Rd_WB_final,
+                dut.BusW_WB_final
+            );
+        end
+    end
+
+    // =========================================================
+    // EXPECTED DEPENDENCY ANNOTATIONS
+    // =========================================================
+    always @(posedge clk) begin
+        case (dut.Instruction_D)
+            32'h04221880:
+                $display(">>> EXPECT: SUB uses forwarded R3");
+            32'h102520C0:
+                $display(">>> EXPECT: AND uses forwarded R4 & R3");
+            32'h08062880:
+                $display(">>> EXPECT: OR uses forwarded R5 & R4");
+        endcase
+    end
+
+endmodule
+
