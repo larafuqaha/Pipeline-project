@@ -66,62 +66,74 @@ module control_unit (
       // -------------------------
       // I-type ALU instructions
       // -------------------------
-      5'd5: begin // ADDI
-        RegWr_control = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b1; // sign-ext
-        ALUop         = 3'b000; // ADD
-      end
+	     // ADDI
+	5'd5: begin
+	  RegWr_control = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b1;
+	  ALUop         = 3'b000;
+	  RBSrc         = 1'b1;   
+	end
+	
+	// ORI
+	5'd6: begin
+	  RegWr_control = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b0;
+	  ALUop         = 3'b010;
+	  RBSrc         = 1'b1;  
+	end
+	
+	// NORI
+	5'd7: begin
+	  RegWr_control = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b0;
+	  ALUop         = 3'b011;
+	  RBSrc         = 1'b1;  
+	end
+	
+	// ANDI
+	5'd8: begin
+	  RegWr_control = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b0;
+	  ALUop         = 3'b100;
+	  RBSrc         = 1'b1;   
+	end
+	
+	// LW
+	5'd9: begin
+	  RegWr_control = 1'b1;
+	  MemRd         = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b1;
+	  ALUop         = 3'b000;
+	  WBdata        = 2'b01;
+	  RBSrc         = 1'b1;  
+	end
+	
+	// SW (already correct)
+	5'd10: begin
+	  MemWr_control = 1'b1;
+	  ALUSrc        = 1'b1;
+	  ExtOp         = 1'b1;
+	  ALUop         = 3'b000;
+	  RBSrc         = 1'b1;
+	end
 
-      5'd6: begin // ORI
-        RegWr_control = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b0; // zero-ext
-        ALUop         = 3'b010; // OR
-      end
-
-      5'd7: begin // NORI
-        RegWr_control = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b0; // zero-ext
-        ALUop         = 3'b011; // NOR
-      end
-
-      5'd8: begin // ANDI
-        RegWr_control = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b0; // zero-ext
-        ALUop         = 3'b100; // AND
-      end
-
-      // -------------------------
-      // Load / Store
-      // -------------------------
-      5'd9: begin // LW
-        RegWr_control = 1'b1;
-        MemRd         = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b1; // sign-ext
-        ALUop         = 3'b000; // ADD
-        WBdata        = 2'b01; // MEM
-      end
-
-      5'd10: begin // SW
-        MemWr_control = 1'b1;
-        ALUSrc        = 1'b1;
-        ExtOp         = 1'b1; // sign-ext
-        ALUop         = 3'b000; // ADD
-        RBSrc         = 1'b1; // use Rd
-      end
 
       // -------------------------
       // CALL
       // -------------------------
       5'd12: begin // CALL
-        RegWr_control = 1'b1;
-        RegDst        = 1'b1; // R31
-        WBdata        = 2'b10; // PC+1
-      end
+		  RegWr_control = 1'b1;
+		  RegDst        = 1'b1;
+		  WBdata        = 2'b10;
+		  ALUSrc        = 1'b1;  
+		  ExtOp         = 1'b1;
+		end
+		
 
       default: begin
         // NOP
@@ -211,64 +223,94 @@ module RegisterFile (
     input  wire [4:0]  Rd,            // write register number
     input  wire [4:0]  Rs,            // read reg A number
     input  wire [4:0]  Rt,            // read reg B number 
-    input  wire [4:0]  Rp,              // read reg P number
-    input  wire [31:0] BusW,          // write data
-    output wire [31:0] BusA,          // read data A 
-    output wire [31:0] BusP,          // read data P
-    output wire [31:0] BusB           // read data B
+    input  wire [4:0]  Rp,            // read predicate reg
+    input  wire [31:0] BusW,           // write data
+
+    output wire [31:0] BusA,           // read data A 
+    output wire [31:0] BusB,           // read data B
+    output wire [31:0] BusP            // read data P
 );
 
-    reg [31:0] registers [0:31]; 
-    // Register pre-load
-        initial begin
-            registers[0] = 0;
-            registers[1] = 1; 
-            registers[2] = 7;
-            registers[3] = 6;
-            registers[4] = 0;
-            registers[5] = 0;
-            registers[6] = 3;
-            registers[7] = 1;
-            registers[8] = 0;
-            registers[9] = 0;
-            registers[10] = 0;
-            registers[11] = 0;
-            registers[12] = 0;
-            registers[13] = 0;
-            registers[14] = 0;
-        end
+    reg [31:0] registers [0:31];
 
-    // async reads
+    // -------------------------------------------------
+    // Initial state
+    // -------------------------------------------------
+    initial begin
+        registers[0]  = 0;
+        registers[1]  = 1;
+        registers[2]  = 7;
+        registers[3]  = 6;
+        registers[4]  = 0;
+        registers[5]  = 0;
+        registers[6]  = 3;
+        registers[7]  = 1;
+        registers[8]  = 0;
+        registers[9]  = 0;
+        registers[10] = 0;
+        registers[11] = 0;
+        registers[12] = 0;
+        registers[13] = 0;
+        registers[14] = 0;
+        registers[15] = 0;
+        registers[16] = 1;
+        registers[17] = 7;
+        registers[18] = 6;
+        registers[19] = 0;
+        registers[20] = 0;
+        registers[21] = 3;
+        registers[22] = 1;
+        registers[23] = 0;
+        registers[24] = 0;
+        registers[25] = 0;
+        registers[26] = 0;
+        registers[27] = 0;
+        registers[28] = 0;
+        registers[29] = 0;
+        registers[30] = 0;   
+        registers[31] = 0;
+    end
+
+    // -------------------------------------------------
+    // Async reads
+    // -------------------------------------------------
     assign BusA = (Rs == 5'd0) ? 32'b0 : registers[Rs];
     assign BusB = (Rt == 5'd0) ? 32'b0 : registers[Rt];
     assign BusP = (Rp == 5'd0) ? 32'b0 : registers[Rp];
 
-    // sync write
+    // -------------------------------------------------
+    // Sync write
+    // -------------------------------------------------
     always @(posedge clk) begin
         if (RegWr_final && (Rd != 5'd0) && (Rd != 5'd30))
             registers[Rd] <= BusW;
 
-        registers[0] <= 32'b0; // keep R0 always zero
+        registers[0]  <= 32'b0;  // R0 hardwired to zero
+        registers[30] <= 32'b0;  // R30 hardwired (PC shadow)
     end
 
 endmodule
 
 
+
+
 module ID_stage (
     input  wire        clk,
-    //input  wire        reset,
 
     input  wire [31:0] Instruction_D,
-    input  wire [31:0] NPC_D,
+    input  wire [31:0] NPC_D,          // NPC = PC in your design
 
+    // WB feedback
     input  wire        RegWr_WB_final,
     input  wire [4:0]  Rd_WB,
     input  wire [31:0] BusW_WB,
 
+    // forwarding data
     input  wire [31:0] Fwd_EX,
     input  wire [31:0] Fwd_MEM,
     input  wire [31:0] Fwd_WB,
 
+    // hazard bookkeeping
     input  wire [4:0]  Rd_EX,
     input  wire [4:0]  Rd_MEM,
     input  wire [4:0]  Rd_WB_pipe,
@@ -276,37 +318,28 @@ module ID_stage (
     input  wire        RegWrite_EX,
     input  wire        RegWrite_MEM,
     input  wire        RegWrite_WB,
-
     input  wire        MemRead_EX,
 
     input  wire        RPzero_EX,
     input  wire        RPzero_MEM,
     input  wire        RPzero_WB,
 
-    // -----------------------------
-    // Outputs back to IF stage control
-    // -----------------------------
+    // ---------------- IF control ----------------
     output wire [1:0]  PCsrc,
     output wire        KILL,
     output wire [31:0] PC_offset,
     output wire [31:0] PC_regRs,
 
-    // Stall controls for IF + IF/ID
     output wire        Stall,
     output wire        disable_PC,
     output wire        disable_IR,
 
-    // -----------------------------
-    // *** THESE ARE THE SIGNALS YOU ASKED FOR ***
-    // Generated in ID (after predication) and then pipelined forward
-    // -----------------------------
-    output wire        RegWr_final,   // RegWr_control & ~RPzero
-    output wire        MemWr_final,   // MemWr_control & ~RPzero
-    output wire        MemRd_final,   // MemRd_control & ~RPzero (recommended)
+    // ---------------- final gated controls ----------------
+    output wire        RegWr_final,
+    output wire        MemWr_final,
+    output wire        MemRd_final,
 
-    // -----------------------------
-    // Outputs into ID/EX register
-    // -----------------------------
+    // ---------------- ID/EX outputs ----------------
     output wire        RegWr_IDEX,
     output wire        MemWr_IDEX,
     output wire        MemRd_IDEX,
@@ -323,7 +356,7 @@ module ID_stage (
     output wire        RPzero_IDEX
 );
 
-    // -------- fields --------
+    // ---------------- instruction fields ----------------
     wire [4:0] opcode = Instruction_D[31:27];
     wire [4:0] Rp     = Instruction_D[26:22];
     wire [4:0] Rd     = Instruction_D[21:17];
@@ -331,11 +364,11 @@ module ID_stage (
     wire [4:0] Rt     = Instruction_D[11:7];
     wire [21:0] imm22 = Instruction_D[21:0];
 
-    // -------- main control (pre-gating) --------
-    wire        RegWr_control, MemWr_control, MemRd_control;
-    wire        ALUSrc_control, ExtOp_control, RBSrc_control, RegDst_control;
-    wire [1:0]  WBdata_control;
-    wire [2:0]  ALUop_control;
+    // ---------------- main control ----------------
+    wire RegWr_control, MemWr_control, MemRd_control;
+    wire ALUSrc_control, ExtOp_control, RBSrc_control, RegDst_control;
+    wire [1:0] WBdata_control;
+    wire [2:0] ALUop_control;
 
     control_unit CU (
         .opcode(opcode),
@@ -350,7 +383,7 @@ module ID_stage (
         .ALUop(ALUop_control)
     );
 
-    // -------- regfile read + Rp comparator --------
+    // ---------------- register file ----------------
     wire [31:0] BusA_raw, BusB_raw, BusP_raw;
 
     RegisterFile RF (
@@ -362,19 +395,15 @@ module ID_stage (
         .Rp(Rp),
         .BusW(BusW_WB),
         .BusA(BusA_raw),
-        .BusP(BusP_raw),
-        .BusB(BusB_raw)
+        .BusB(BusB_raw),
+        .BusP(BusP_raw)
     );
 
-    wire Rpzero;
-	// Rp == R0  ? unconditional execution ? NOT zero
-    // Rp != R0  ? zero only if BusP == 0
-	assign Rpzero = (Rp != 5'd0) && (BusP_raw == 32'b0); 
+    // ---------------- predication ----------------
+    wire Rpzero = (Rp != 5'd0) && (BusP_raw == 32'b0);
     assign RPzero_IDEX = Rpzero;
 
-    assign PC_regRs = BusA_raw;
-
-    // -------- extender --------
+    // ---------------- extender ----------------
     wire [31:0] imm_ext;
     extender EXT (
         .opcode(opcode),
@@ -383,12 +412,7 @@ module ID_stage (
         .imm_out(imm_ext)
     );
 
-    // -------- PC + offset (use NPC-1 as PC base) --------
-    wire [31:0] PC_base = NPC_D - 32'd1;
-    assign PC_offset    = PC_base + imm_ext;
-    assign NPC2_IDEX    = PC_offset;   // your NPC2 path
-
-    // -------- PC control --------
+    // ---------------- PC control ----------------
     pc_control PCC (
         .Op(opcode),
         .Rpzero(Rpzero),
@@ -396,7 +420,7 @@ module ID_stage (
         .KILL(KILL)
     );
 
-    // -------- hazard unit --------
+    // ---------------- hazard unit ----------------
     wire [1:0] ForwardA, ForwardB;
 
     Hazard_Unit HU (
@@ -420,7 +444,7 @@ module ID_stage (
     assign disable_PC = Stall;
     assign disable_IR = Stall;
 
-    // -------- forwarding muxes --------
+    // ---------------- forwarding muxes ----------------
     reg [31:0] A_fwd, B_fwd;
 
     always @(*) begin
@@ -441,32 +465,42 @@ module ID_stage (
         endcase
     end
 
+    // JR must use forwarded Rs
+    assign PC_regRs = A_fwd;
+
+	// jump target
+	assign PC_offset = NPC_D + imm_ext - 32'd1;
+
+	// return address =  NPC_D we pipeline PC +1 
+	assign NPC2_IDEX = NPC_D;
+
+
+    // ---------------- datapath outputs ----------------
     assign A_IDEX   = A_fwd;
     assign B_IDEX   = B_fwd;
     assign IMM_IDEX = imm_ext;
+   
 
-    // -------- dest reg selection --------
-    wire [4:0] RB_sel  = (RBSrc_control) ? Rd : Rt;
-    wire [4:0] Rd2_sel = (RegDst_control) ? 5'd31 : RB_sel;
-    assign Rd2_IDEX = Rd2_sel;
+    // ---------------- destination register ----------------
+    wire [4:0] RB_sel  = RBSrc_control ? Rd : Rt;
+    assign Rd2_IDEX = RegDst_control ? 5'd31 : RB_sel;
 
-    // -------- predication gating (THESE ARE THE "final" signals) --------
+    // ---------------- predication gating ----------------
     wire exec_en = ~Rpzero;
 
     assign RegWr_final = RegWr_control & exec_en;
     assign MemWr_final = MemWr_control & exec_en;
     assign MemRd_final = MemRd_control & exec_en;
 
-    // -------- bubble injection on Stall --------
+    // ---------------- bubble injection ----------------
     wire bubble = Stall;
 
     assign RegWr_IDEX  = bubble ? 1'b0 : RegWr_final;
     assign MemWr_IDEX  = bubble ? 1'b0 : MemWr_final;
     assign MemRd_IDEX  = bubble ? 1'b0 : MemRd_final;
 
-    assign ALUSrc_IDEX = bubble ? 1'b0    : ALUSrc_control;
-    assign ALUop_IDEX  = bubble ? 3'b000  : ALUop_control;
-    assign WBdata_IDEX = bubble ? 2'b00   : WBdata_control;
+    assign ALUSrc_IDEX = bubble ? 1'b0   : ALUSrc_control;
+    assign ALUop_IDEX  = bubble ? 3'b000 : ALUop_control;
+    assign WBdata_IDEX = bubble ? 2'b00  : WBdata_control;
 
 endmodule
-
