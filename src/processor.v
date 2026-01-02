@@ -1,11 +1,6 @@
-//============================================================
-// processor.v  (TOP-LEVEL PIPELINED CPU)
-// Wires: IF -> IF/ID -> ID -> ID/EX -> EX -> MEM -> MEM/WB -> WB
-// Uses your existing modules as-is.
-//============================================================
 module Processor (
     input  wire clk,
-    input  wire rst_async   // async reset input (button, etc.)
+    input  wire rst_async
 );
 
     // -----------------------------
@@ -30,17 +25,17 @@ module Processor (
     wire [31:0] PC;
 
     IF_stage u_if (
-        .clk         (clk),
-        .reset       (rst_sync),
-        .disable_PC  (disable_PC),
-        .disable_IR  (disable_IR),
-        .KILL        (KILL),
-        .PCsrc       (PCsrc),
-        .PC_offset   (PC_offset),
-        .PC_regRs    (PC_regRs),
+        .clk          (clk),
+        .reset        (rst_sync),
+        .disable_PC   (disable_PC),
+        .disable_IR   (disable_IR),
+        .KILL         (KILL),
+        .PCsrc        (PCsrc),
+        .PC_offset    (PC_offset),
+        .PC_regRs     (PC_regRs),
         .Instruction_F(Instruction_F),
-        .NPC_F       (NPC_F),
-        .PC          (PC)
+        .NPC_F        (NPC_F),
+        .PC           (PC)
     );
 
     // -----------------------------
@@ -50,6 +45,7 @@ module Processor (
 
     IF_ID u_ifid (
         .clk          (clk),
+        .reset        (rst_sync),
         .disable_IR   (disable_IR),
         .kill         (KILL),
         .Instruction_F(Instruction_F),
@@ -59,21 +55,24 @@ module Processor (
     );
 
     // -----------------------------
-    // WB stage (from MEM/WB)
+    // WB stage outputs (from MEM/WB)
     // -----------------------------
-    wire        RegWr_WB_final;
+    wire        RegWr_WB_final_raw;
     wire [4:0]  Rd_WB_final;
     wire [31:0] BusW_WB_final;
 
+    // WB gated write-enable (predication + R0 protection)
+    wire RegWr_WB_final;
+
     // -----------------------------
-    // Forwarding value buses back to ID
+    // Forwarding buses back to ID
     // -----------------------------
     wire [31:0] Fwd_EX;
     wire [31:0] Fwd_MEM;
     wire [31:0] Fwd_WB;
 
     // -----------------------------
-    // ID stage needs pipeline bookkeeping signals
+    // Hazard bookkeeping into ID_stage
     // -----------------------------
     wire [4:0]  Rd_EX_pipe, Rd_MEM_pipe, Rd_WB_pipe;
     wire        RegWrite_EX_pipe, RegWrite_MEM_pipe, RegWrite_WB_pipe;
@@ -94,61 +93,53 @@ module Processor (
     wire [4:0]  Rd2_IDEX;
     wire        RPzero_IDEX;
 
-    // Also produced in ID (gated), not strictly needed in top,
-    // but you asked for these signals in ID_stage so we keep them.
-    wire RegWr_final_ID, MemWr_final_ID, MemRd_final_ID;
+    // tie-offs (avoid warnings)
+    wire RegWr_final_ID_unused, MemWr_final_ID_unused, MemRd_final_ID_unused;
 
+    // -----------------------------
+    // ID stage
+    // -----------------------------
     ID_stage u_id (
         .clk            (clk),
 
         .Instruction_D  (Instruction_D),
         .NPC_D          (NPC_D),
 
-        // Writeback to regfile
         .RegWr_WB_final (RegWr_WB_final),
         .Rd_WB          (Rd_WB_final),
         .BusW_WB        (BusW_WB_final),
 
-        // Forwarding buses
         .Fwd_EX         (Fwd_EX),
         .Fwd_MEM        (Fwd_MEM),
         .Fwd_WB         (Fwd_WB),
 
-        // Dest regs per stage (for hazard unit)
         .Rd_EX          (Rd_EX_pipe),
         .Rd_MEM         (Rd_MEM_pipe),
         .Rd_WB_pipe     (Rd_WB_pipe),
 
-        // RegWrite per stage (for forwarding priority)
         .RegWrite_EX    (RegWrite_EX_pipe),
         .RegWrite_MEM   (RegWrite_MEM_pipe),
         .RegWrite_WB    (RegWrite_WB_pipe),
 
-        // load-use stall detect
         .MemRead_EX     (MemRead_EX_pipe),
 
-        // predication kill bits per stage
         .RPzero_EX      (RPzero_EX_pipe),
         .RPzero_MEM     (RPzero_MEM_pipe),
         .RPzero_WB      (RPzero_WB_pipe),
 
-        // Back to IF
         .PCsrc          (PCsrc),
         .KILL           (KILL),
         .PC_offset      (PC_offset),
         .PC_regRs       (PC_regRs),
 
-        // Stall controls
         .Stall          (Stall),
         .disable_PC     (disable_PC),
         .disable_IR     (disable_IR),
 
-        // Final gated controls in ID (requested)
-        .RegWr_final    (RegWr_final_ID),
-        .MemWr_final    (MemWr_final_ID),
-        .MemRd_final    (MemRd_final_ID),
+        .RegWr_final    (RegWr_final_ID_unused),
+        .MemWr_final    (MemWr_final_ID_unused),
+        .MemRd_final    (MemRd_final_ID_unused),
 
-        // Into ID/EX register (bubble-injected)
         .RegWr_IDEX     (RegWr_IDEX),
         .MemWr_IDEX     (MemWr_IDEX),
         .MemRd_IDEX     (MemRd_IDEX),
@@ -175,51 +166,58 @@ module Processor (
 
     wire [31:0] A_EX, B_EX, Imm_EX, NPC_EX;
     wire [4:0]  Rd_EX;
-    // NOTE: ID_EX module you gave doesn't carry RPzero; we pipeline it separately.
 
     ID_EX u_idex (
-		.clk       (clk),
+        .clk       (clk),
+        .reset     (rst_sync),
+        .kill      (KILL),
+        .stall     (Stall),
 
-    	.RegWr_ID  (RegWr_IDEX),
-    	.MemWr_ID  (MemWr_IDEX),
-    	.MemRd_ID  (MemRd_IDEX),
-    	.ALUSrc_ID (ALUSrc_IDEX),
-    	.ALUop_ID  (ALUop_IDEX),
-    	.WBdata_ID (WBdata_IDEX),
+        .RegWr_ID  (RegWr_IDEX),
+        .MemWr_ID  (MemWr_IDEX),
+        .MemRd_ID  (MemRd_IDEX),
+        .ALUSrc_ID (ALUSrc_IDEX),
+        .ALUop_ID  (ALUop_IDEX),
+        .WBdata_ID (WBdata_IDEX),
 
-    	.A_ID      (A_IDEX),
-    	.B_ID      (B_IDEX),
-    	.Imm_ID    (IMM_IDEX),
-    	.NPC_ID    (NPC2_IDEX),
-    	.Rd_ID     (Rd2_IDEX),
+        .A_ID      (A_IDEX),
+        .B_ID      (B_IDEX),
+        .Imm_ID    (IMM_IDEX),
+        .NPC_ID    (NPC2_IDEX),
+        .Rd_ID     (Rd2_IDEX),
 
-    	.RPzero_ID (RPzero_IDEX),
+        .RegWr_EX  (RegWr_EX),
+        .MemWr_EX  (MemWr_EX),
+        .MemRd_EX  (MemRd_EX),
+        .ALUSrc_EX (ALUSrc_EX),
+        .ALUop_EX  (ALUop_EX),
+        .WBdata_EX (WBdata_EX),
 
-    	.RegWr_EX  (RegWr_EX),
-    	.MemWr_EX  (MemWr_EX),
-    	.MemRd_EX  (MemRd_EX),
-    	.ALUSrc_EX (ALUSrc_EX),
-    	.ALUop_EX  (ALUop_EX),
-    	.WBdata_EX (WBdata_EX),
+        .A_EX      (A_EX),
+        .B_EX      (B_EX),
+        .Imm_EX    (Imm_EX),
+        .NPC_EX    (NPC_EX),
+        .Rd_EX     (Rd_EX)
+    );
 
-    	.A_EX      (A_EX),
-    	.B_EX      (B_EX),
-    	.Imm_EX    (Imm_EX),
-    	.NPC_EX    (NPC_EX),
-    	.Rd_EX     (Rd_EX),
-
-    	.RPzero_EX (RPzero_EX)
-	);
-	
+    // pipeline RPzero into EX
+    reg RPzero_EX_reg;
+    always @(posedge clk or posedge rst_sync) begin
+        if (rst_sync) RPzero_EX_reg <= 1'b0;
+        else          RPzero_EX_reg <= RPzero_IDEX;
+    end
 
     // -----------------------------
-    // Execute stage (your module includes EX->MEM register inside)
+    // Execute stage
     // -----------------------------
     wire        RegWr_EXM, MemWr_EXM, MemRd_EXM;
     wire [1:0]  WBdata_EXM;
     wire [31:0] ALUout_EXM, D_EXM, NPC3_EXM;
     wire [4:0]  rd3_EXM;
     wire        RPzero_EXM;
+
+    // Store-data must be squashed if predicated-false
+    wire [31:0] B_EX_store_safe = (RPzero_EX_reg) ? 32'b0 : B_EX;
 
     Execute u_ex (
         .clk        (clk),
@@ -235,7 +233,7 @@ module Processor (
         .npc2       (NPC_EX),
         .imm        (Imm_EX),
         .A          (A_EX),
-        .B          (B_EX),
+        .B          (B_EX_store_safe),
         .rd2        (Rd_EX),
         .RPzero_ID  (RPzero_EX_reg),
 
@@ -252,7 +250,7 @@ module Processor (
     );
 
     // -----------------------------
-    // MEM stage (your module includes MEM->(WBdata_out,Rd3_MEM,RegWrite_MEM) register)
+    // MEM stage
     // -----------------------------
     wire        RegWrite_MEM;
     wire [4:0]  Rd3_MEM;
@@ -285,15 +283,17 @@ module Processor (
     end
 
     // -----------------------------
-    // MEM/WB pipeline register (your MEM_WB)
+    // MEM/WB pipeline register
     // -----------------------------
     MEM_WB u_memwb (
         .clk        (clk),
+        .reset      (rst_sync),
+
         .RegWrite   (RegWrite_MEM),
         .Rd         (Rd3_MEM),
         .Data       (WBdata_out_MEM),
 
-        .RegWr_final(RegWr_WB_final),
+        .RegWr_final(RegWr_WB_final_raw),
         .Rd_out     (Rd_WB_final),
         .Data_out   (BusW_WB_final)
     );
@@ -306,11 +306,20 @@ module Processor (
     end
 
     // -----------------------------
-    // Expose bookkeeping signals to ID_stage hazard logic
+    // WB gating
+    // IMPORTANT: do NOT block R31 (CALL must write R31)
     // -----------------------------
-    assign Rd_EX_pipe        = rd3_EXM;       // EX destination
-    assign Rd_MEM_pipe       = Rd3_MEM;       // MEM destination
-    assign Rd_WB_pipe        = Rd_WB_final;   // WB destination
+    assign RegWr_WB_final =
+        RegWr_WB_final_raw &&
+        !RPzero_WB_reg &&
+        (Rd_WB_final != 5'd0);
+
+    // -----------------------------
+    // Bookkeeping back to ID_stage
+    // -----------------------------
+    assign Rd_EX_pipe        = rd3_EXM;
+    assign Rd_MEM_pipe       = Rd3_MEM;
+    assign Rd_WB_pipe        = Rd_WB_final;
 
     assign RegWrite_EX_pipe  = RegWr_EXM;
     assign RegWrite_MEM_pipe = RegWrite_MEM;
@@ -322,11 +331,9 @@ module Processor (
     assign RPzero_MEM_pipe   = RPzero_MEM_reg;
     assign RPzero_WB_pipe    = RPzero_WB_reg;
 
-    // -----------------------------
-    // Forwarding buses back to ID
-    // -----------------------------
-    assign Fwd_EX  = ALUout_EXM;        // EX result
-    assign Fwd_MEM = WBdata_out_MEM;    // value after MEM stage selection
-    assign Fwd_WB  = BusW_WB_final;     // final WB data
+    // forwarding buses
+    assign Fwd_EX  = ALUout_EXM;
+    assign Fwd_MEM = WBdata_out_MEM;
+    assign Fwd_WB  = BusW_WB_final;
 
 endmodule
