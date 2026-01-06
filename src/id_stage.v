@@ -481,9 +481,11 @@ module ID_stage (
     assign IMM_IDEX = imm_ext;
    
 
-    // ---------------- destination register ----------------
-    wire [4:0] RB_sel  = RBSrc_control ? Rd : Rt;
-    assign Rd2_IDEX = RegDst_control ? 5'd31 : RB_sel;
+    // BusB selection
+	wire [4:0] RB_bus = RBSrc_control ? Rd : Rt;
+
+	// Destination selection 
+	assign Rd2_IDEX = RegDst_control ? 5'd31 : Rd;
 
     // ---------------- predication gating ----------------
     wire exec_en = ~Rpzero;
