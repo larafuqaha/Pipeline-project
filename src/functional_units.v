@@ -15,26 +15,24 @@ module DataMemo (
         for (i = 0; i < 64; i = i + 1)
             memory[i] = 32'b0;
 
-        //  test data
-        memory[1] = 32'h00000003; // address 4
-        memory[2] = 32'h00000007; // address 8
+        memory[8]  = 32'h0000002A;  // 42
+    	memory[12] = 32'h0000000D;  // 13
     end
 
     // WRITE (word-aligned)
     always @(posedge clk) begin
         if (MemWr_final) begin
-            memory[Address[7:2]] <= Data_in;
+            memory[Address[5:0]] <= Data_in;
         end
     end
 
-    // READ 
+    // READ (combinational)
     always @(*) begin
         if (MemRd)
-            Data_out = memory[Address[7:2]];
+            Data_out = memory[Address[5:0]];
         else
-            Data_out = 32'b0;
+            Data_out = 32'b0;	  
     end
-
 endmodule
 
 
