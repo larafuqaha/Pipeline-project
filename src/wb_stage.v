@@ -6,13 +6,14 @@ module WriteBack(
   output reg [31:0] writeData
 );
 
-  always @(*) begin
-    casez (WBdata)
-      2'b00: writeData = ALUout;
-      2'b01: writeData = MemOut;
-      2'b10: writeData = NPC3;
-      default: writeData = 32'b0; // safe NOP
+always @(*) begin	   
+
+    case (WBdata)
+        2'b00: writeData = ALUout;
+        2'b01: writeData = MemOut;
+        2'b10: writeData = NPC3;
+        default: writeData = 32'b0;
     endcase
-  end
+end
 
 endmodule
