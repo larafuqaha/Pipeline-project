@@ -148,24 +148,45 @@ endmodule
 module MEM_WB (
     input  wire        clk,
     input  wire        reset,
-    input  wire        RegWrite,
-    input  wire [4:0]  Rd,
-    input  wire [31:0] Data,
 
+    // -------- Inputs from MEM stage --------
+    input  wire        RegWrite_MEM,
+    input  wire [4:0]  Rd_MEM,
+    input  wire [1:0]  WBdata_MEM,
+
+    input  wire [31:0] ALUout_MEM,
+    input  wire [31:0] MemOut_MEM,
+    input  wire [31:0] NPC3_MEM,
+
+    // -------- Outputs to WB stage --------
     output reg         RegWr_final,
-    output reg  [4:0]  Rd_out,
-    output reg  [31:0] Data_out
+    output reg  [4:0]  Rd_final,
+    output reg  [1:0]  WBdata_final,
+
+    output reg  [31:0] ALUout_final,
+    output reg  [31:0] MemOut_final,
+    output reg  [31:0] NPC3_final
 );
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            RegWr_final <= 1'b0;
-            Rd_out      <= 5'b0;
-            Data_out    <= 32'b0;
+            RegWr_final   <= 1'b0;
+            Rd_final      <= 5'd0;
+            WBdata_final  <= 2'b00;
+
+            ALUout_final  <= 32'b0;
+            MemOut_final  <= 32'b0;
+            NPC3_final    <= 32'b0;
         end else begin
-            RegWr_final <= RegWrite;
-            Rd_out      <= Rd;
-            Data_out    <= Data;
-        end
+            RegWr_final   <= RegWrite_MEM;
+            Rd_final      <= Rd_MEM;
+            WBdata_final  <= WBdata_MEM;
+
+            ALUout_final  <= ALUout_MEM;
+            MemOut_final  <= MemOut_MEM;
+            NPC3_final    <= NPC3_MEM;
+	end	  
+
     end
+
 endmodule
