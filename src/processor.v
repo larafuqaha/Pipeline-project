@@ -57,11 +57,14 @@ module Processor (
     // -----------------------------
     // WB stage outputs (from MEM/WB)
     // -----------------------------
-    wire        RegWr_WB_final_raw;
     wire [4:0]  Rd_WB_final;
-    wire [31:0] BusW_WB_final;
+    wire [31:0] BusW_WB_final;	
+	wire        RegWr_WB_final_raw;
+wire [1:0]  WBdata_WB;
+wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
 
-    // WB gated write-enable (predication + R0 protection)
+
+    // IMPORTANT: declare this BEFORE using it in u_id
     wire RegWr_WB_final;
 
     // -----------------------------
@@ -169,9 +172,9 @@ module Processor (
 
     ID_EX u_idex (
         .clk       (clk),
-        .reset     (rst_sync),
-        .kill      (KILL),
-        .stall     (Stall),
+        .reset     (rst_sync),	
+		.kill      (KILL),    
+   		 .stall     (Stall),    
 
         .RegWr_ID  (RegWr_IDEX),
         .MemWr_ID  (MemWr_IDEX),
@@ -216,7 +219,6 @@ module Processor (
     wire [4:0]  rd3_EXM;
     wire        RPzero_EXM;
 
-    // Store-data must be squashed if predicated-false
     wire [31:0] B_EX_store_safe = (RPzero_EX_reg) ? 32'b0 : B_EX;
 
     Execute u_ex (
@@ -250,30 +252,38 @@ module Processor (
     );
 
     // -----------------------------
-    // MEM stage
-    // -----------------------------
-    wire        RegWrite_MEM;
-    wire [4:0]  Rd3_MEM;
-    wire [31:0] WBdata_out_MEM;
+	// MEM stage ? MEM/WB inputs
+	// -----------------------------
+	wire        RegWrite_MEM;
+	wire [4:0]  Rd_MEM;
+	wire [1:0]  WBdata_MEM;
+	wire [31:0] ALUout_MEM;
+	wire [31:0] MemOut_MEM;
+	wire [31:0] NPC3_MEM;
+
 
     mem_stage u_mem (
-        .clk         (clk),
-        .reset       (rst_sync),
+    .clk         (clk),
+    .reset       (rst_sync),
 
-        .RegWrite_EX (RegWr_EXM),
-        .memW        (MemWr_EXM),
-        .memR        (MemRd_EXM),
-        .WBdata      (WBdata_EXM),
+    .RegWrite_EX (RegWr_EXM),
+    .memW        (MemWr_EXM),
+    .memR        (MemRd_EXM),
+    .WBdata_EX   (WBdata_EXM),
 
-        .D           (D_EXM),
-        .ALUout      (ALUout_EXM),
-        .NPC3        (NPC3_EXM),
-        .rd3         (rd3_EXM),
+    .D           (D_EXM),
+    .ALUout_EX   (ALUout_EXM),
+    .NPC3_EX     (NPC3_EXM),
+    .rd3_EX      (rd3_EXM),
 
-        .RegWrite_MEM(RegWrite_MEM),
-        .Rd3_MEM     (Rd3_MEM),
-        .WBdata_out  (WBdata_out_MEM)
-    );
+    .RegWrite_MEM(RegWrite_MEM),
+    .Rd_MEM      (Rd_MEM),
+    .WBdata_MEM  (WBdata_MEM),
+    .ALUout_MEM  (ALUout_MEM),
+    .MemOut_MEM  (MemOut_MEM),
+    .NPC3_MEM    (NPC3_MEM)
+	);
+
 
     // pipeline RPzero into MEM
     reg RPzero_MEM_reg;
@@ -284,19 +294,36 @@ module Processor (
 
     // -----------------------------
     // MEM/WB pipeline register
-    // -----------------------------
-    MEM_WB u_memwb (
-        .clk        (clk),
-        .reset      (rst_sync),
+    // -----------------------------  
 
-        .RegWrite   (RegWrite_MEM),
-        .Rd         (Rd3_MEM),
-        .Data       (WBdata_out_MEM),
+  MEM_WB u_memwb (
+  .clk         (clk),
+  .reset       (rst_sync),
 
-        .RegWr_final(RegWr_WB_final_raw),
-        .Rd_out     (Rd_WB_final),
-        .Data_out   (BusW_WB_final)
-    );
+  .RegWrite_MEM(RegWrite_MEM),
+  .Rd_MEM      (Rd_MEM),
+  .WBdata_MEM  (WBdata_MEM),
+  .ALUout_MEM  (ALUout_MEM),
+  .MemOut_MEM  (MemOut_MEM),
+  .NPC3_MEM    (NPC3_MEM),
+
+  .RegWr_final (RegWr_WB_final_raw),
+  .Rd_final    (Rd_WB_final),
+  .WBdata_final(WBdata_WB),
+  .ALUout_final(ALUout_WB),
+  .MemOut_final(MemOut_WB),
+  .NPC3_final  (NPC3_WB)
+);
+
+WriteBack u_wb (
+  .ALUout    (ALUout_WB),
+  .MemOut    (MemOut_WB),
+  .NPC3      (NPC3_WB),
+  .WBdata    (WBdata_WB),
+  .writeData (BusW_WB_final)
+);
+
+
 
     // pipeline RPzero into WB
     reg RPzero_WB_reg;
@@ -307,18 +334,18 @@ module Processor (
 
     // -----------------------------
     // WB gating
-    // IMPORTANT: do NOT block R31 (CALL must write R31)
     // -----------------------------
     assign RegWr_WB_final =
         RegWr_WB_final_raw &&
         !RPzero_WB_reg &&
-        (Rd_WB_final != 5'd0);
+        (Rd_WB_final != 5'd0) &&
+		(Rd_WB_final != 5'd30);
 
     // -----------------------------
     // Bookkeeping back to ID_stage
     // -----------------------------
     assign Rd_EX_pipe        = rd3_EXM;
-    assign Rd_MEM_pipe       = Rd3_MEM;
+    assign Rd_MEM_pipe = Rd_MEM;
     assign Rd_WB_pipe        = Rd_WB_final;
 
     assign RegWrite_EX_pipe  = RegWr_EXM;
@@ -333,7 +360,10 @@ module Processor (
 
     // forwarding buses
     assign Fwd_EX  = ALUout_EXM;
-    assign Fwd_MEM = WBdata_out_MEM;
+    assign Fwd_MEM =
+    (WBdata_MEM == 2'b01) ? MemOut_MEM :   // LW
+    (WBdata_MEM == 2'b10) ? NPC3_MEM   :   // CALL if it can be forwarded
+                            ALUout_MEM;    // ALU ops default
     assign Fwd_WB  = BusW_WB_final;
 
 endmodule
