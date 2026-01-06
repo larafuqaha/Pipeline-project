@@ -1,0 +1,96 @@
+`timescale 1ns/1ps
+
+module tb_processor;
+
+  // -------------------------
+  // Clock & Reset
+  // -------------------------
+  reg clk;
+  reg rst_async;
+
+  // -------------------------
+  // DUT
+  // -------------------------
+  Processor UUT (
+    .clk(clk),
+    .rst_async(rst_async)
+  );
+
+  // -------------------------
+  // Clock generation
+  // -------------------------
+  initial clk = 0;
+
+  always #5 begin
+    clk = ~clk;
+    // Print EVERY clock edge (this makes the clock pulse visible)
+    $display("T=%0t | CLK=%b", $time, clk);
+  end
+
+  // -------------------------
+  // Reset generation
+  // -------------------------
+  initial begin
+    rst_async = 1'b1;
+    $display("T=%0t | RESET ASSERTED", $time);
+
+    repeat (4) @(posedge clk);
+
+    rst_async = 1'b0;
+    $display("T=%0t | RESET DEASSERTED", $time);
+  end
+
+  // -------------------------
+  // Pipeline trace (posedge)
+  // -------------------------
+  always @(posedge clk) begin
+    if (!rst_async) begin
+      $display(
+        "T=%0t | PC=%0d | IF=%h | ID=%h | EX_ALU=%h | RP_EX=%b | WB_WR=%b | WB_Rd=%0d | WB_Data=%h",
+        $time,
+
+        // IF
+        UUT.PC,
+        UUT.Instruction_F,
+
+        // ID
+        UUT.Instruction_D,
+
+        // EX
+        UUT.ALUout_EXM,
+        UUT.RPzero_EXM,
+
+        // WB
+        UUT.RegWr_WB_final,
+        UUT.Rd_WB_final,
+        UUT.BusW_WB_final
+      );
+    end
+  end
+
+  // -------------------------
+  // Explicit WB pulse detector
+  // -------------------------
+  always @(posedge clk) begin
+    if (UUT.RegWr_WB_final) begin
+      $display(
+        ">>> WB PULSE @ T=%0t : Rd=%0d Data=%h <<<",
+        $time,
+        UUT.Rd_WB_final,
+        UUT.BusW_WB_final
+      );
+    end
+  end
+
+  // -------------------------
+  // End simulation
+  // -------------------------
+  initial begin
+    repeat (50) @(posedge clk);
+    $display("---- SIMULATION FINISHED ----");
+    $finish;
+  end
+
+endmodule
+
+
