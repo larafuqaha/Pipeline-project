@@ -386,12 +386,14 @@ module ID_stage (
     // ---------------- register file ----------------
     wire [31:0] BusA_raw, BusB_raw, BusP_raw;
 
+	// BusB selection
+	wire [4:0] RB_bus = RBSrc_control ? Rd : Rt;
     RegisterFile RF (
         .clk(clk),
         .RegWr_final(RegWr_WB_final),
         .Rd(Rd_WB),
         .Rs(Rs),
-        .Rt(Rt),
+        .Rt(RB_bus),
         .Rp(Rp),
         .BusW(BusW_WB),
         .BusA(BusA_raw),
@@ -479,10 +481,6 @@ module ID_stage (
     assign A_IDEX   = A_fwd;
     assign B_IDEX   = B_fwd;
     assign IMM_IDEX = imm_ext;
-   
-
-    // BusB selection
-	wire [4:0] RB_bus = RBSrc_control ? Rd : Rt;
 
 	// Destination selection 
 	assign Rd2_IDEX = RegDst_control ? 5'd31 : Rd;
