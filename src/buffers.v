@@ -38,7 +38,9 @@ module ID_EX (
     input  wire [31:0] Imm_ID,
     input  wire [31:0] NPC_ID,
     input  wire [4:0]  Rd_ID,
-	
+    input  wire [4:0]  Rs_ID,  
+    input  wire [4:0]  Rt_ID,   
+
     input  wire        stall,
 
     // outputs to EX
@@ -53,12 +55,13 @@ module ID_EX (
     output reg  [31:0] B_EX,
     output reg  [31:0] Imm_EX,
     output reg  [31:0] NPC_EX,
-    output reg  [4:0]  Rd_EX
+    output reg  [4:0]  Rd_EX,
+    output reg  [4:0]  Rs_EX,  
+    output reg  [4:0]  Rt_EX   
 );
 
     always @(posedge clk or posedge reset) begin
         if (reset || stall) begin
-            
             RegWr_EX  <= 1'b0;
             MemWr_EX  <= 1'b0;
             MemRd_EX  <= 1'b0;
@@ -71,6 +74,8 @@ module ID_EX (
             Imm_EX <= 32'b0;
             NPC_EX <= 32'b0;
             Rd_EX  <= 5'b0;
+            Rs_EX  <= 5'b0;   
+            Rt_EX  <= 5'b0;   
         end else begin
             RegWr_EX  <= RegWr_ID;
             MemWr_EX  <= MemWr_ID;
@@ -84,9 +89,10 @@ module ID_EX (
             Imm_EX <= Imm_ID;
             NPC_EX <= NPC_ID;
             Rd_EX  <= Rd_ID;
+            Rs_EX  <= Rs_ID;  
+            Rt_EX  <= Rt_ID; 
         end
     end
-
 endmodule
 
 
