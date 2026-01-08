@@ -172,8 +172,7 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
 
     ID_EX u_idex (
         .clk       (clk),
-        .reset     (rst_sync),	
-		.kill      (KILL),    
+        .reset     (rst_sync),	  
    		 .stall     (Stall),    
 
         .RegWr_ID  (RegWr_IDEX),
