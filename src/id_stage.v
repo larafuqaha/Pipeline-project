@@ -353,7 +353,10 @@ module ID_stage (
     output wire [31:0] IMM_IDEX,
     output wire [31:0] NPC2_IDEX,
     output wire [4:0]  Rd2_IDEX,
-    output wire        RPzero_IDEX
+    output wire        RPzero_IDEX,
+	output wire [4:0] Rs_IDEX,
+	output wire [4:0] Rt_IDEX,
+
 );
 
     // ---------------- instruction fields ----------------
@@ -382,12 +385,38 @@ module ID_stage (
         .WBdata(WBdata_control),
         .ALUop(ALUop_control)
     );
+	
+	wire UseRs;
+	wire UseRt;	
+	
+	assign UseRs =
+       (opcode == 5'd0)  || // ADD
+       (opcode == 5'd1)  || // SUB
+       (opcode == 5'd2)  || // OR
+       (opcode == 5'd3)  || // NOR
+       (opcode == 5'd4)  || // AND
+       (opcode == 5'd5)  || // ADDI
+       (opcode == 5'd6)  || // ORI
+       (opcode == 5'd7)  || // NORI
+       (opcode == 5'd8)  || // ANDI
+       (opcode == 5'd9) || // LW
+       (opcode == 5'd10) || // SW
+       (opcode == 5'd13);   // JR
+
+assign UseRt =
+       (opcode == 5'd0) || // ADD
+       (opcode == 5'd1) || // SUB
+       (opcode == 5'd2) || // OR
+       (opcode == 5'd3) || // NOR
+       (opcode == 5'd4);   // AND
+
 
     // ---------------- register file ----------------
-    wire [31:0] BusA_raw, BusB_raw, BusP_raw;
-
+    wire [31:0] BusA_raw, BusB_raw, BusP_raw; 
+	
 	// BusB selection
 	wire [4:0] RB_bus = RBSrc_control ? Rd : Rt;
+
     RegisterFile RF (
         .clk(clk),
         .RegWr_final(RegWr_WB_final),
@@ -428,6 +457,8 @@ module ID_stage (
     Hazard_Unit HU (
         .Rs(Rs),
         .Rt(Rt),
+		.UseRs(UseRs),
+    .UseRt(UseRt),
         .Rd_EX(Rd_EX),
         .Rd_MEM(Rd_MEM),
         .Rd_WB(Rd_WB_pipe),
@@ -481,9 +512,11 @@ module ID_stage (
     assign A_IDEX   = A_fwd;
     assign B_IDEX   = B_fwd;
     assign IMM_IDEX = imm_ext;
+   
 
 	// Destination selection 
 	assign Rd2_IDEX = RegDst_control ? 5'd31 : Rd;
+
 
     // ---------------- predication gating ----------------
     wire exec_en = ~Rpzero;
@@ -501,6 +534,10 @@ module ID_stage (
 
     assign ALUSrc_IDEX = bubble ? 1'b0   : ALUSrc_control;
     assign ALUop_IDEX  = bubble ? 3'b000 : ALUop_control;
-    assign WBdata_IDEX = bubble ? 2'b00  : WBdata_control;
+    assign WBdata_IDEX = bubble ? 2'b00  : WBdata_control;	   
+	
+	assign Rs_IDEX = Rs;
+	assign Rt_IDEX = Rt;
+
 
 endmodule
