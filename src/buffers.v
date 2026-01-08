@@ -38,9 +38,7 @@ module ID_EX (
     input  wire [31:0] Imm_ID,
     input  wire [31:0] NPC_ID,
     input  wire [4:0]  Rd_ID,
-
-    // flush controls
-    input  wire        kill,
+	
     input  wire        stall,
 
     // outputs to EX
