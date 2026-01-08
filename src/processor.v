@@ -94,10 +94,12 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
 
     wire [31:0] A_IDEX, B_IDEX, IMM_IDEX, NPC2_IDEX;
     wire [4:0]  Rd2_IDEX;
-    wire        RPzero_IDEX;
+    wire        RPzero_IDEX;	   
+	wire [4:0] Rs_IDEX, Rt_IDEX;
+
 
     // tie-offs (avoid warnings)
-    wire RegWr_final_ID_unused, MemWr_final_ID_unused, MemRd_final_ID_unused;
+    wire RegWr_final_ID_unused, MemWr_final_ID_unused, MemRd_final_ID_unused;  
 
     // -----------------------------
     // ID stage
@@ -156,7 +158,10 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
         .IMM_IDEX       (IMM_IDEX),
         .NPC2_IDEX      (NPC2_IDEX),
         .Rd2_IDEX       (Rd2_IDEX),
-        .RPzero_IDEX    (RPzero_IDEX)
+        .RPzero_IDEX    (RPzero_IDEX),
+		.Rs_IDEX (Rs_IDEX),
+		.Rt_IDEX (Rt_IDEX)
+
     );
 
     // -----------------------------
@@ -168,11 +173,12 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
     wire [1:0]  WBdata_EX;
 
     wire [31:0] A_EX, B_EX, Imm_EX, NPC_EX;
-    wire [4:0]  Rd_EX;
+    wire [4:0]  Rd_EX;	  
+	wire [4:0] Rs_EX, Rt_EX;
 
     ID_EX u_idex (
         .clk       (clk),
-        .reset     (rst_sync),	  
+        .reset     (rst_sync),	   
    		 .stall     (Stall),    
 
         .RegWr_ID  (RegWr_IDEX),
@@ -186,7 +192,9 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
         .B_ID      (B_IDEX),
         .Imm_ID    (IMM_IDEX),
         .NPC_ID    (NPC2_IDEX),
-        .Rd_ID     (Rd2_IDEX),
+        .Rd_ID     (Rd2_IDEX),	
+		.Rs_ID (Rs_IDEX),
+		.Rt_ID (Rt_IDEX),
 
         .RegWr_EX  (RegWr_EX),
         .MemWr_EX  (MemWr_EX),
@@ -199,7 +207,9 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
         .B_EX      (B_EX),
         .Imm_EX    (Imm_EX),
         .NPC_EX    (NPC_EX),
-        .Rd_EX     (Rd_EX)
+        .Rd_EX     (Rd_EX),
+		.Rs_EX (Rs_EX),
+		.Rt_EX (Rt_EX)
     );
 
     // pipeline RPzero into EX
@@ -236,7 +246,15 @@ wire [31:0] ALUout_WB, MemOut_WB, NPC3_WB;
         .A          (A_EX),
         .B          (B_EX_store_safe),
         .rd2        (Rd_EX),
-        .RPzero_ID  (RPzero_EX_reg),
+		.rs2 (Rs_EX),
+		.rt2 (Rt_EX),
+        .RPzero_ID  (RPzero_EX_reg), 
+		.RegWr_EXM   (RegWr_EXM),
+		.rd3_EXM     (rd3_EXM),
+		.ALUout_EXM  (ALUout_EXM),	
+		.RegWr_WB    (RegWr_WB_final),
+		.Rd_WB       (Rd_WB_final),
+		.BusW_WB     (BusW_WB_final),
 
         .RegWr_EX   (RegWr_EXM),
         .MemWr_EX   (MemWr_EXM),
