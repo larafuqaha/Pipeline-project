@@ -69,7 +69,8 @@ endmodule
 
 module Hazard_Unit (
     input  [4:0] Rs, Rt,
-    input  [4:0] Rd_EX, Rd_MEM, Rd_WB,
+    input  [4:0] Rd_EX, Rd_MEM, Rd_WB,	
+	input UseRs, UseRt,
 
     input        RegWrite_EX,
     input        RegWrite_MEM,
@@ -94,7 +95,7 @@ module Hazard_Unit (
         ForwardB = 2'b00;
 
         // ---------- Forward A (Rs) ----------
-        if ((RegWrite_EX)  && !RPzero_EX  &&
+        if (RegWrite_EX  && !RPzero_EX  &&
             (Rd_EX  != 5'd0) && (Rd_EX  != 5'd30) && (Rd_EX  == Rs))
             ForwardA = 2'b01;
         else if (RegWrite_MEM && !RPzero_MEM &&
@@ -123,8 +124,8 @@ module Hazard_Unit (
         if (MemRead_EX &&
             !RPzero_EX &&
             (Rd_EX != 5'd0) &&
-            (Rd_EX != 5'd30) &&    // <<< CRITICAL FIX
-            ((Rd_EX == Rs) || (Rd_EX == Rt)))
+            (Rd_EX != 5'd30) &&   
+            ((UseRs && Rd_EX == Rs) || (UseRt && Rd_EX == Rt)))
             Stall = 1'b1;
         else
             Stall = 1'b0;
