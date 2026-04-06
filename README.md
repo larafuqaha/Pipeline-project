@@ -84,7 +84,8 @@ The testbench loads binary test programs into instruction memory and verifies co
 
 ## Team
 
-| Names
-Lara Fuqaha
-Tawba Abdallah
-Dana Taher
+| Names |
+|---|---|
+|Lara Fuqaha| |
+|Tawba Abdallah| |
+|Dana Taher | |
