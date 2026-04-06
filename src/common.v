@@ -69,18 +69,23 @@ endmodule
 
 module Hazard_Unit (
     input  [4:0] Rs, Rt,
-    input  [4:0] Rd_EX, Rd_MEM, Rd_WB,	
-	input UseRs, UseRt,
+    input        UseRs, UseRt,
 
-    input        RegWrite_EX,
+ 
+    input  [4:0] Rd_EXM, Rd_MEM, Rd_WB,
+    input        RegWrite_EXM,
     input        RegWrite_MEM,
     input        RegWrite_WB,
-
-    input        MemRead_EX,
-
-    input        RPzero_EX,     // 1 = killed, 0 = executes
+    input        RPzero_EXM,
     input        RPzero_MEM,
     input        RPzero_WB,
+
+
+    input  [4:0] Rd_IDEX,
+    input        MemRead_IDEX,
+    input        RPzero_IDEX,
+	input  [4:0] Rp,
+	output reg [1:0] ForwardP,
 
     output reg [1:0] ForwardA,
     output reg [1:0] ForwardB,
@@ -88,44 +93,56 @@ module Hazard_Unit (
 );
 
     // -------------------------------------------------
-    // Forwarding logic
+    // Forwarding logic 
     // -------------------------------------------------
     always @(*) begin
         ForwardA = 2'b00;
-        ForwardB = 2'b00;
+        ForwardB = 2'b00; 
+		ForwardP = 2'b00;
+
+		if (RegWrite_EXM && !RPzero_EXM &&
+		    (Rd_EXM != 5'd0) && (Rd_EXM != 5'd30) && (Rd_EXM == Rp))
+		    ForwardP = 2'b01;
+		else if (RegWrite_MEM && !RPzero_MEM &&
+		         (Rd_MEM != 5'd0) && (Rd_MEM != 5'd30) && (Rd_MEM == Rp))
+		    ForwardP = 2'b10;
+		else if (RegWrite_WB && !RPzero_WB &&
+		         (Rd_WB != 5'd0) && (Rd_WB != 5'd30) && (Rd_WB == Rp))
+		    ForwardP = 2'b11;
+		
 
         // ---------- Forward A (Rs) ----------
-        if (RegWrite_EX  && !RPzero_EX  &&
-            (Rd_EX  != 5'd0) && (Rd_EX  != 5'd30) && (Rd_EX  == Rs))
+        if (RegWrite_EXM && !RPzero_EXM &&
+            (Rd_EXM != 5'd0) && (Rd_EXM != 5'd30) && (Rd_EXM == Rs))
             ForwardA = 2'b01;
         else if (RegWrite_MEM && !RPzero_MEM &&
                  (Rd_MEM != 5'd0) && (Rd_MEM != 5'd30) && (Rd_MEM == Rs))
             ForwardA = 2'b10;
-        else if (RegWrite_WB  && !RPzero_WB  &&
-                 (Rd_WB  != 5'd0) && (Rd_WB  != 5'd30) && (Rd_WB  == Rs))
+        else if (RegWrite_WB && !RPzero_WB &&
+                 (Rd_WB != 5'd0) && (Rd_WB != 5'd30) && (Rd_WB == Rs))
             ForwardA = 2'b11;
 
         // ---------- Forward B (Rt) ----------
-        if (RegWrite_EX  && !RPzero_EX  &&
-            (Rd_EX  != 5'd0) && (Rd_EX  != 5'd30) && (Rd_EX  == Rt))
+        if (RegWrite_EXM && !RPzero_EXM &&
+            (Rd_EXM != 5'd0) && (Rd_EXM != 5'd30) && (Rd_EXM == Rt))
             ForwardB = 2'b01;
         else if (RegWrite_MEM && !RPzero_MEM &&
                  (Rd_MEM != 5'd0) && (Rd_MEM != 5'd30) && (Rd_MEM == Rt))
             ForwardB = 2'b10;
-        else if (RegWrite_WB  && !RPzero_WB  &&
-                 (Rd_WB  != 5'd0) && (Rd_WB  != 5'd30) && (Rd_WB  == Rt))
+        else if (RegWrite_WB && !RPzero_WB &&
+                 (Rd_WB != 5'd0) && (Rd_WB != 5'd30) && (Rd_WB == Rt))
             ForwardB = 2'b11;
     end
 
     // -------------------------------------------------
-    // Load-use stall detection
+    // Load-use stall detection 
     // -------------------------------------------------
     always @(*) begin
-        if (MemRead_EX &&
-            !RPzero_EX &&
-            (Rd_EX != 5'd0) &&
-            (Rd_EX != 5'd30) &&   
-            ((UseRs && Rd_EX == Rs) || (UseRt && Rd_EX == Rt)))
+        if (MemRead_IDEX &&
+            !RPzero_IDEX &&
+            (Rd_IDEX != 5'd0) &&
+            (Rd_IDEX != 5'd30) &&
+            ((UseRs && (Rd_IDEX == Rs)) || (UseRt && (Rd_IDEX == Rt))))
             Stall = 1'b1;
         else
             Stall = 1'b0;

@@ -113,7 +113,7 @@ module control_unit (
 	  RBSrc         = 1'b1;  
 	end
 	
-	// SW (already correct)
+	// SW
 	5'd10: begin
 	  MemWr_control = 1'b1;
 	  ALUSrc        = 1'b1;
@@ -241,7 +241,7 @@ module RegisterFile (
         registers[1]  = 1;
         registers[2]  = 7;
         registers[3]  = 6;
-        registers[4]  = 0;
+        registers[4]  = 1;
         registers[5]  = 0;
         registers[6]  = 3;
         registers[7]  = 1;
@@ -303,7 +303,11 @@ module ID_stage (
     // WB feedback
     input  wire        RegWr_WB_final,
     input  wire [4:0]  Rd_WB,
-    input  wire [31:0] BusW_WB,
+    input  wire [31:0] BusW_WB,	  
+	input wire [4:0]  Rd_IDEX_haz,
+	input wire        MemRead_IDEX_haz,
+	input wire        RPzero_IDEX_haz,
+
 
     // forwarding data
     input  wire [31:0] Fwd_EX,
@@ -366,6 +370,7 @@ module ID_stage (
     wire [4:0] Rs     = Instruction_D[16:12];
     wire [4:0] Rt     = Instruction_D[11:7];
     wire [21:0] imm22 = Instruction_D[21:0];
+	
 
     // ---------------- main control ----------------
     wire RegWr_control, MemWr_control, MemRd_control;
@@ -431,7 +436,7 @@ assign UseRt =
     );
 
     // ---------------- predication ----------------
-    wire Rpzero = (Rp != 5'd0) && (BusP_raw == 32'b0);
+
     assign RPzero_IDEX = Rpzero;
 
     // ---------------- extender ----------------
@@ -453,26 +458,45 @@ assign UseRt =
 
     // ---------------- hazard unit ----------------
     wire [1:0] ForwardA, ForwardB;
+	wire isSW = (opcode == 5'd10);
+wire [4:0] Rt_haz  = isSW ? Rd : Rt;
+wire       UseRt_haz = isSW ? 1'b1 : UseRt;	
+wire [1:0] ForwardP;
+
+
 
     Hazard_Unit HU (
-        .Rs(Rs),
-        .Rt(Rt),
-		.UseRs(UseRs),
+    .Rs(Rs),
+    .Rt(Rt),
+    .UseRs(UseRs),
     .UseRt(UseRt),
-        .Rd_EX(Rd_EX),
-        .Rd_MEM(Rd_MEM),
-        .Rd_WB(Rd_WB_pipe),
-        .RegWrite_EX(RegWrite_EX),
-        .RegWrite_MEM(RegWrite_MEM),
-        .RegWrite_WB(RegWrite_WB),
-        .MemRead_EX(MemRead_EX),
-        .RPzero_EX(RPzero_EX),
-        .RPzero_MEM(RPzero_MEM),
-        .RPzero_WB(RPzero_WB),
-        .ForwardA(ForwardA),
-        .ForwardB(ForwardB),
-        .Stall(Stall)
-    );
+	.Rp(Rp),
+.ForwardP(ForwardP),
+
+    // forwarding sources (EX/MEM, MEM, WB)
+    .Rd_EXM(Rd_EX),
+    .Rd_MEM(Rd_MEM),
+    .Rd_WB (Rd_WB_pipe),
+
+    .RegWrite_EXM(RegWrite_EX),
+    .RegWrite_MEM(RegWrite_MEM),
+    .RegWrite_WB (RegWrite_WB),
+
+    .RPzero_EXM(RPzero_EX),
+    .RPzero_MEM(RPzero_MEM),
+    .RPzero_WB (RPzero_WB),
+
+    
+    .Rd_IDEX     (Rd_IDEX_haz),
+    .MemRead_IDEX(MemRead_IDEX_haz),
+    .RPzero_IDEX (RPzero_IDEX_haz),
+
+    .ForwardA(ForwardA),
+    .ForwardB(ForwardB),
+    .Stall(Stall)
+);
+
+    
 
     assign disable_PC = Stall;
     assign disable_IR = Stall;
@@ -497,6 +521,18 @@ assign UseRt =
             2'b11: B_fwd = Fwd_WB;
         endcase
     end
+	reg [31:0] P_fwd;
+
+always @(*) begin
+    case (ForwardP)
+        2'b00: P_fwd = BusP_raw;
+        2'b01: P_fwd = Fwd_EX;
+        2'b10: P_fwd = Fwd_MEM;
+        2'b11: P_fwd = Fwd_WB;
+    endcase
+end
+
+wire Rpzero = (Rp != 5'd0) && (P_fwd == 32'b0);
 
     // JR must use forwarded Rs
     assign PC_regRs = A_fwd;
@@ -537,7 +573,7 @@ assign UseRt =
     assign WBdata_IDEX = bubble ? 2'b00  : WBdata_control;	   
 	
 	assign Rs_IDEX = Rs;
-	assign Rt_IDEX = Rt;
+	assign Rt_IDEX = RB_bus;;
 
 
 endmodule
